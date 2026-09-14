@@ -1,0 +1,52 @@
+{
+  "protocol": "SOS_FRAME_V1",
+  "packet_size_bytes": 48,
+  "byte_order": "BIG_ENDIAN",
+  "crc_algorithm": "CRC-16-CCITT (Poly 0x1021, Init 0xFFFF, Final XOR 0x0000)",
+  "test_vectors": [
+    {
+      "id": "vector_01_flood_critical",
+      "description": "Pune Flood SOS - P0 Critical, 4 Adults 1 Child, 85% Battery",
+      "fields": {
+        "magic_byte": 82,
+        "packet_id": 1,
+        "source_node": 305419896,
+        "ttl": 15,
+        "hops": 0,
+        "timestamp": 1725490176,
+        "triage_priority": 0,
+        "latitude": 18.52043,
+        "longitude": 73.85674,
+        "latitude_raw": 185204300,
+        "longitude_raw": 738567400,
+        "battery": 85,
+        "adults": 4,
+        "children": 1,
+        "payload_text": "Flood water rising fast"
+      },
+      "expected_hex": "52000112345678f066d8e400000b09fe4c2c05a4e85541466c6f6f6420776174657220726973696e67206661737410a5"
+    },
+    {
+      "id": "vector_02_medical_p1",
+      "description": "Mumbai Collapse SOS - P1 Medical, 2 Adults 0 Children, 42% Battery",
+      "fields": {
+        "magic_byte": 82,
+        "packet_id": 42,
+        "source_node": 286331153,
+        "ttl": 12,
+        "hops": 3,
+        "timestamp": 1725490200,
+        "triage_priority": 1,
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "latitude_raw": 190760000,
+        "longitude_raw": 728777000,
+        "battery": 42,
+        "adults": 2,
+        "children": 0,
+        "payload_text": "Severe leg fracture"
+      },
+      "expected_hex": "52002a11111111c366d8e418010b5ec4402b7041282a20536576657265206c656720667261637475726500000000600c"
+    }
+  ]
+}

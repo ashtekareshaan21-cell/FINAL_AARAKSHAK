@@ -1,0 +1,221 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+
+class LocationData {
+  final double latitude;
+  final double longitude;
+  final double accuracy;
+  final double speed;
+  final double heading;
+  final DateTime timestamp;
+  final bool isMockedOrFallback;
+  final String label;
+  final String address;
+  final bool isLiveTracking;
+
+  const LocationData({
+    required this.latitude,
+    required this.longitude,
+    this.accuracy = 10.0,
+    this.speed = 0.0,
+    this.heading = 0.0,
+    required this.timestamp,
+    this.isMockedOrFallback = false,
+    this.label = 'GPS Location',
+    this.address = 'Fetching street address...',
+    this.isLiveTracking = false,
+  });
+
+  factory LocationData.defaultFallback() {
+    return LocationData(
+      latitude: 18.5204,
+      longitude: 73.8567,
+      accuracy: 15.0,
+      timestamp: DateTime.now(),
+      isMockedOrFallback: true,
+      label: 'TEST LOCATION (DEFAULT DEMO)',
+      address: 'Simulated Demo Coordinates (18.5204, 73.8567)',
+      isLiveTracking: false,
+    );
+  }
+
+  LocationData copyWith({
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    double? speed,
+    double? heading,
+    DateTime? timestamp,
+    bool? isMockedOrFallback,
+    String? label,
+    String? address,
+    bool? isLiveTracking,
+  }) {
+    return LocationData(
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      accuracy: accuracy ?? this.accuracy,
+      speed: speed ?? this.speed,
+      heading: heading ?? this.heading,
+      timestamp: timestamp ?? this.timestamp,
+      isMockedOrFallback: isMockedOrFallback ?? this.isMockedOrFallback,
+      label: label ?? this.label,
+      address: address ?? this.address,
+      isLiveTracking: isLiveTracking ?? this.isLiveTracking,
+    );
+  }
+}
+
+class LocationService {
+  final _locationController = StreamController<LocationData>.broadcast();
+  StreamSubscription<Position>? _positionSubscription;
+  LocationData _currentLocation = LocationData.defaultFallback();
+
+  LocationData get currentLocation => _currentLocation;
+  Stream<LocationData> get locationStream => _locationController.stream;
+
+  /// Fetches single position fix and starts background continuous stream
+  Future<LocationData> getCurrentLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _currentLocation = LocationData.defaultFallback();
+        return _currentLocation;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _currentLocation = LocationData.defaultFallback();
+          return _currentLocation;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        _currentLocation = LocationData.defaultFallback();
+        return _currentLocation;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 5),
+      );
+
+      _currentLocation = LocationData(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
+        speed: position.speed,
+        heading: position.heading,
+        timestamp: DateTime.now(),
+        isMockedOrFallback: false,
+        label: 'Live Device GPS',
+        isLiveTracking: true,
+      );
+
+      _locationController.add(_currentLocation);
+      startLiveTrackingStream();
+      _resolveAddress(_currentLocation.latitude, _currentLocation.longitude);
+
+      return _currentLocation;
+    } catch (_) {
+      _currentLocation = LocationData.defaultFallback();
+      return _currentLocation;
+    }
+  }
+
+  /// Starts continuous real-time GPS stream (triggers update when moving >= 5m)
+  void startLiveTrackingStream() {
+    _positionSubscription?.cancel();
+    const locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 5,
+    );
+
+    _positionSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+      (Position position) {
+        _currentLocation = LocationData(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          accuracy: position.accuracy,
+          speed: position.speed,
+          heading: position.heading,
+          timestamp: DateTime.now(),
+          isMockedOrFallback: false,
+          label: 'Live Device GPS',
+          isLiveTracking: true,
+          address: _currentLocation.address,
+        );
+        _locationController.add(_currentLocation);
+        _resolveAddress(position.latitude, position.longitude);
+      },
+      onError: (e) {
+        debugPrint('Live tracking stream error: $e');
+      },
+    );
+  }
+
+  /// OpenStreetMap Reverse Geocoding API integration
+  Future<void> _resolveAddress(double lat, double lng) async {
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&zoom=18&addressdetails=1',
+      );
+      final response = await http.get(url, headers: {
+        'User-Agent': 'ResQMesh-AI-DisasterApp/1.0',
+      }).timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final String displayName = data['display_name'] ?? '';
+        if (displayName.isNotEmpty) {
+          // Format concise readable address
+          final parts = displayName.split(',');
+          final conciseAddress = parts.length > 3
+              ? '${parts[0].trim()}, ${parts[1].trim()}, ${parts[2].trim()}'
+              : displayName;
+
+          _currentLocation = _currentLocation.copyWith(address: conciseAddress);
+          _locationController.add(_currentLocation);
+        }
+      }
+    } catch (_) {
+      // Offline fallback: keep existing address or fallback
+    }
+  }
+
+  void updateSimulatedLocation(double lat, double lng, {String label = 'Custom Coordinates'}) {
+    _positionSubscription?.cancel();
+    _currentLocation = LocationData(
+      latitude: lat,
+      longitude: lng,
+      accuracy: 5.0,
+      timestamp: DateTime.now(),
+      isMockedOrFallback: true,
+      label: label,
+      address: 'Simulated Sector Coordinates',
+      isLiveTracking: false,
+    );
+    _locationController.add(_currentLocation);
+    _resolveAddress(lat, lng);
+  }
+
+  void generateRandomLocation() {
+    final random = DateTime.now().microsecondsSinceEpoch;
+    final rLat = 18.4000 + ((random % 250) / 1000.0);
+    final rLng = 73.7000 + (((random ~/ 10) % 250) / 1000.0);
+    final sectorId = (random % 900) + 100;
+    final randomName = '🎲 Test Sector #$sectorId (Demo Region)';
+
+    updateSimulatedLocation(rLat, rLng, label: randomName);
+  }
+
+  void dispose() {
+    _positionSubscription?.cancel();
+    _locationController.close();
+  }
+}
