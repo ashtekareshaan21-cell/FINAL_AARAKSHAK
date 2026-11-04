@@ -91,7 +91,9 @@ class _NasaAtmosphereMapWidgetState extends State<NasaAtmosphereMapWidget> with 
     );
     if (mounted) {
       setState(() => _telemetry = telemetry);
-      widget.onTelemetryUpdated?.call(telemetry);
+      if (telemetry != null) {
+        widget.onTelemetryUpdated?.call(telemetry);
+      }
     }
   }
 
