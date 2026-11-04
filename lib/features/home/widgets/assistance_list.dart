@@ -17,7 +17,7 @@ class AssistanceList extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Text(
-          'No nearby assistance points identified within discovery radius.',
+          'No verified assistance points loaded yet. For emergencies, call 108 / 112.',
           style: TextStyle(fontSize: 12, color: Colors.white60),
         ),
       );

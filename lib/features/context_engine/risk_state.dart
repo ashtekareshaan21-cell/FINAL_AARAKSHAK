@@ -27,14 +27,16 @@ class RiskState {
   });
 
   factory RiskState.initial() {
+    // Phase 0 safety: an initial state claims no weather and no
+    // confidence — it must never display invented calm weather.
     return RiskState(
       level: RiskLevel.safe,
       score: 0.0,
       nearestHazardKm: 999.0,
       primaryHazard: 'No Active Hazards Nearby',
-      confidence: 1.0,
+      confidence: 0.0,
       activeSos: false,
-      weatherSummary: 'Calm • 24°C • Wind 12 km/h',
+      weatherSummary: 'No data yet',
       lastUpdated: DateTime.now(),
     );
   }

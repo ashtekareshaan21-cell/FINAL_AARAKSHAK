@@ -103,7 +103,7 @@ class _LocationSelectorModalState extends ConsumerState<LocationSelectorModal> {
             ],
           ),
           const Text(
-            'Select a testing location or use real device GPS. Simulated locations will trigger unified Context Engine re-evaluation.',
+            'Use real device GPS, or pick a manual location. Manual locations are not live GPS and are flagged as such.',
             style: TextStyle(fontSize: 11, color: Colors.white60),
           ),
           const SizedBox(height: 16),
@@ -138,33 +138,8 @@ class _LocationSelectorModalState extends ConsumerState<LocationSelectorModal> {
           ),
 
           const SizedBox(height: 12),
-
-          // 2. Random Location Generator Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                ref.read(locationStateProvider.notifier).generateRandomLocation();
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('🎲 Random Test Location Generated & Context Engine Re-evaluated'),
-                    backgroundColor: Colors.cyan,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.casino_rounded, color: Colors.black, size: 18),
-              label: const Text(
-                'GENERATE RANDOM TEST LOCATION 🎲',
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 11),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyanAccent,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ),
+          // Phase 0 safety: random test-location generation removed.
+          // A random sector must never become the app location.
 
           const SizedBox(height: 16),
           const Text(

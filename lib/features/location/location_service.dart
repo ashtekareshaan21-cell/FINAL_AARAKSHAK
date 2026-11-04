@@ -30,14 +30,18 @@ class LocationData {
   });
 
   factory LocationData.defaultFallback() {
+    // Phase 0 safety: this is explicitly NOT a confirmed location.
+    // Coordinates are a placeholder only; isMockedOrFallback stays true
+    // so Home SOS and risk calculation block until real GPS or an
+    // explicit manual location replaces it.
     return LocationData(
       latitude: 18.5204,
       longitude: 73.8567,
-      accuracy: 15.0,
+      accuracy: 0.0,
       timestamp: DateTime.now(),
       isMockedOrFallback: true,
-      label: 'TEST LOCATION (DEFAULT DEMO)',
-      address: 'Simulated Demo Coordinates (18.5204, 73.8567)',
+      label: 'Location not confirmed',
+      address: 'GPS unavailable — location not confirmed',
       isLiveTracking: false,
     );
   }
@@ -204,15 +208,8 @@ class LocationService {
     _resolveAddress(lat, lng);
   }
 
-  void generateRandomLocation() {
-    final random = DateTime.now().microsecondsSinceEpoch;
-    final rLat = 18.4000 + ((random % 250) / 1000.0);
-    final rLng = 73.7000 + (((random ~/ 10) % 250) / 1000.0);
-    final sectorId = (random % 900) + 100;
-    final randomName = '🎲 Test Sector #$sectorId (Demo Region)';
-
-    updateSimulatedLocation(rLat, rLng, label: randomName);
-  }
+  // Phase 0 safety: random test-location generation is removed
+  // entirely. Locations come from live GPS or explicit manual entry.
 
   void dispose() {
     _positionSubscription?.cancel();

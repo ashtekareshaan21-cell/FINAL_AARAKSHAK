@@ -204,5 +204,11 @@ class DatabaseHelper {
     await db.delete('mesh_nodes');
     await db.delete('resources');
     await db.delete('checkins');
+    // Phase 0 safety: previously these four tables were left behind,
+    // so "reset" did not actually reset.
+    await db.delete('hazards');
+    await db.delete('assistance_points');
+    await db.delete('mesh_outbox');
+    await db.delete('sos_packets');
   }
 }

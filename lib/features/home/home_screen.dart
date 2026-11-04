@@ -37,9 +37,10 @@ class HomeScreen extends ConsumerWidget {
 
     final palette = AtmosphereTheme.getPaletteForRiskLevel(riskState.level);
 
-    final bool isOnline = simState.isSimulationActive
-        ? simState.networkStatus == NetworkStatus.online
-        : true;
+    // Phase 0 safety: simulation must never make live weather look live
+    // or offline. Weather liveness is gated by WeatherSnapshot.stateTag
+    // in WeatherSummaryCard; simulation only suppresses the live badge.
+    final bool isOnline = !simState.isSimulationActive;
 
     return Scaffold(
       backgroundColor: palette.backgroundColor,
@@ -88,6 +89,20 @@ class HomeScreen extends ConsumerWidget {
                       EmergencyActionPanel(
                         activeSos: activeSos,
                         onTriggerSos: () {
+                          // Phase 0 safety: never send a Home SOS from an
+                          // unconfirmed / fallback location.
+                          if (location.isMockedOrFallback) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Location not confirmed — GPS on karo ya manual location chuno, phir SOS bhejo.',
+                                ),
+                                backgroundColor: Colors.amber,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            return;
+                          }
                           ref.read(sosControllerProvider.notifier).triggerSos(
                                 userLat: location.latitude,
                                 userLng: location.longitude,
@@ -95,9 +110,6 @@ class HomeScreen extends ConsumerWidget {
                         },
                         onCancelSos: () {
                           ref.read(sosControllerProvider.notifier).cancelSos();
-                        },
-                        onSimulateResponderAck: (sosId, msg) {
-                          ref.read(sosControllerProvider.notifier).receiveResponderAck(sosId, msg);
                         },
                       ),
 
@@ -181,15 +193,16 @@ class HomeScreen extends ConsumerWidget {
     SimulationState simState,
     AtmospherePalette palette,
   ) {
+    // Phase 0 safety: do not claim ONLINE. This badge only says whether
+    // the app is in simulation mode; real connectivity is not asserted
+    // here (a real connectivity provider is a Phase 1 follow-up).
     final String netStatusLabel = simState.isSimulationActive
-        ? simState.networkStatus.name.toUpperCase()
-        : 'ONLINE';
+        ? 'SIMULATION: ${simState.networkStatus.name.toUpperCase()}'
+        : 'APP ACTIVE';
 
-    final Color netColor = netStatusLabel == 'ONLINE'
+    final Color netColor = netStatusLabel == 'APP ACTIVE'
         ? const Color(0xFF10B981)
-        : netStatusLabel == 'MESHCONNECTED' || netStatusLabel == 'MESH ONLY'
-            ? Colors.blueAccent
-            : Colors.amber;
+        : Colors.blueAccent;
 
     final bool isDemoLocation = location.isMockedOrFallback;
 

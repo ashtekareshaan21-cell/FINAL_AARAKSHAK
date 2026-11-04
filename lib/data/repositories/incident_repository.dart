@@ -53,7 +53,9 @@ class IncidentRecord {
     this.receivedAt,
     required this.clientPriority,
     required this.serverPriority,
-    this.trustScore = 94,
+    // Phase 0 safety: unverified incidents start at 0, never at a
+    // claimed 94%. Trust only rises via real verification.
+    this.trustScore = 0,
     this.assignedUnit = '',
     this.etaMinutes = 0,
     this.eocNotes = '',
@@ -109,7 +111,7 @@ class IncidentRecord {
       receivedAt: map['received_at'] != null ? DateTime.parse(map['received_at']) : null,
       clientPriority: map['client_priority'],
       serverPriority: map['server_priority'],
-      trustScore: map['trust_score'] ?? 94,
+      trustScore: map['trust_score'] ?? 0,
       assignedUnit: map['assigned_unit'] ?? '',
       etaMinutes: map['eta_minutes'] ?? 0,
       eocNotes: map['eoc_notes'] ?? '',
@@ -159,37 +161,9 @@ class IncidentRecord {
 }
 
 class IncidentRepository {
-  static final List<IncidentRecord> _webInMemoryQueue = [
-    // Seed an initial incident so Admin EOC is not empty on first launch
-    IncidentRecord(
-      id: 'INC-7F92A-4B12',
-      sourceNode: 0x12345678,
-      packetId: 0x4B12,
-      category: 'Flood',
-      priority: 'P0 — CRITICAL',
-      severityScore: 130,
-      latitude: 18.52043,
-      longitude: 73.85674,
-      gpsAccuracy: 8.0,
-      battery: 85,
-      headcount: 4,
-      medicalStatus: 'Unconscious',
-      description: 'Flood water rising fast. 4 people trapped inside structure. 1 person unconscious.',
-      packetHex: '525351310001123456784B1266D42A1000000000000000000000000000000000',
-      ttl: 15,
-      hopCount: 2,
-      status: 'DELIVERED',
-      createdAt: DateTime.now().subtract(const Duration(minutes: 3)),
-      receivedAt: DateTime.now().subtract(const Duration(minutes: 2)),
-      clientPriority: 'P0 — CRITICAL',
-      serverPriority: 'P0 — CRITICAL',
-      trustScore: 94,
-      assignedUnit: 'NDRF Rescue Unit 04',
-      etaMinutes: 18,
-      eocNotes: 'Boat squad dispatched with medical team.',
-      humanVerified: true,
-    ),
-  ];
+  // Phase 0 safety: no seeded incident. A fresh install must show an
+  // empty EOC — never an invented rescue, assignment, or dispatch.
+  static final List<IncidentRecord> _webInMemoryQueue = [];
 
   static final StreamController<List<IncidentRecord>> _streamController =
       StreamController<List<IncidentRecord>>.broadcast();

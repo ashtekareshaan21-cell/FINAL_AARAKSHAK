@@ -62,10 +62,9 @@ class HazardRepository {
       hazardMap[h.id] = h;
     }
 
-    // 4. Merge Simulated hazards
-    for (var h in _simulatedHazards) {
-      hazardMap[h.id] = h;
-    }
+    // Phase 0 safety: simulated hazards are NEVER merged into the
+    // production list. _simulatedHazards stays only for Mesh Lab
+    // experiments and is intentionally ignored here.
 
     // 5. Filter strictly within [radiusKm] (default 25 km Discovery radius)
     final allHazards = hazardMap.values.where((h) {
