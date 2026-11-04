@@ -14,11 +14,19 @@ class WeatherSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isLive = isOnline && weather.stateTag == WeatherStateTag.live;
+    final bool isUnavailable =
+        weather.stateTag == WeatherStateTag.unavailable;
 
-    final Color badgeColor = isLive ? const Color(0xFF10B981) : Colors.amber;
+    final Color badgeColor = isLive
+        ? const Color(0xFF10B981)
+        : isUnavailable
+            ? Colors.grey
+            : Colors.amber;
     final String statusLabel = isLive
         ? '● LIVE TELEMETRY'
-        : '● OFFLINE CACHED (${_formatAge(weather.observedAt)})';
+        : isUnavailable
+            ? '● DATA UNAVAILABLE'
+            : '● OFFLINE CACHED (${_formatAge(weather.observedAt)})';
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -102,13 +110,14 @@ class WeatherSummaryCard extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Metrics Grid Row
+          // Metrics Grid Row — unavailable snapshots show '--', never
+          // invented numbers.
           Row(
             children: [
-              _buildMetric('Temp', '${weather.temperatureC.toStringAsFixed(1)}°C', Icons.thermostat_rounded, Colors.orangeAccent),
-              _buildMetric('Rainfall', '${weather.precipitationMm.toStringAsFixed(1)} mm/h', Icons.water_drop_rounded, Colors.blueAccent),
-              _buildMetric('Humidity', '${weather.humidity}%', Icons.water_rounded, Colors.cyanAccent),
-              _buildMetric('Wind', '${weather.windKmh.toStringAsFixed(1)} km/h', Icons.air_rounded, Colors.tealAccent),
+              _buildMetric('Temp', isUnavailable ? '--' : '${weather.temperatureC.toStringAsFixed(1)}°C', Icons.thermostat_rounded, Colors.orangeAccent),
+              _buildMetric('Rainfall', isUnavailable ? '--' : '${weather.precipitationMm.toStringAsFixed(1)} mm/h', Icons.water_drop_rounded, Colors.blueAccent),
+              _buildMetric('Humidity', isUnavailable ? '--' : '${weather.humidity}%', Icons.water_rounded, Colors.cyanAccent),
+              _buildMetric('Wind', isUnavailable ? '--' : '${weather.windKmh.toStringAsFixed(1)} km/h', Icons.air_rounded, Colors.tealAccent),
             ],
           ),
         ],

@@ -5,14 +5,12 @@ class EmergencyActionPanel extends StatelessWidget {
   final SosPacket? activeSos;
   final VoidCallback onTriggerSos;
   final VoidCallback onCancelSos;
-  final Function(String, String)? onSimulateResponderAck;
 
   const EmergencyActionPanel({
     super.key,
     required this.activeSos,
     required this.onTriggerSos,
     required this.onCancelSos,
-    this.onSimulateResponderAck,
   });
 
   @override
@@ -142,27 +140,10 @@ class EmergencyActionPanel extends StatelessWidget {
             ],
 
             const SizedBox(height: 14),
+            // Phase 0 safety: no simulated responder ACK. An ACK may only
+            // come from a real server / mesh confirmation (Phase 2).
             Row(
               children: [
-                if (activeSos!.status != SosStatus.receivedByResponder &&
-                    onSimulateResponderAck != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => onSimulateResponderAck!(
-                        activeSos!.id,
-                        'Rescue Unit 4 En-route (ETA 10 min)',
-                      ),
-                      icon: const Icon(Icons.send_rounded, size: 14),
-                      label: const Text('Simulate EOC ACK', style: TextStyle(fontSize: 11)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.cyanAccent,
-                        side: const BorderSide(color: Colors.cyanAccent),
-                      ),
-                    ),
-                  ),
-                if (activeSos!.status != SosStatus.receivedByResponder &&
-                    onSimulateResponderAck != null)
-                  const SizedBox(width: 10),
                 Expanded(
                   child: TextButton.icon(
                     onPressed: onCancelSos,
