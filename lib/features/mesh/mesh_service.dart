@@ -10,8 +10,10 @@ enum MeshConnectivityState {
 
 class MeshService {
   final PacketRouter _router;
-  MeshConnectivityState _connectivityState = MeshConnectivityState.connected;
-  int _connectedPeers = 3;
+  // Phase 0 safety: no fake peers. The mesh starts disconnected with
+  // 0 peers until real discovery exists (Phase 2).
+  MeshConnectivityState _connectivityState = MeshConnectivityState.disconnected;
+  int _connectedPeers = 0;
 
   final _meshStateController = StreamController<MeshConnectivityState>.broadcast();
   final _incomingPacketController = StreamController<MeshPacket>.broadcast();
