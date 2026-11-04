@@ -37,11 +37,11 @@ class HazardApiService implements HazardDataSource {
               latitude: userLat + 0.02,
               longitude: userLng + 0.01,
               timestamp: DateTime.now(),
-              confidence: 0.90,
+              confidence: 0.60,
               source: HazardSource.weatherApi,
-              description: 'High velocity gale winds detected near user coordinate.',
-              responderConfirmed: true,
-              supportingReports: 12,
+              description: 'Weather-derived estimate: high winds in the forecast for this point — not a responder-confirmed hazard.',
+              responderConfirmed: false,
+              supportingReports: 0,
             ),
           );
         }
@@ -57,11 +57,11 @@ class HazardApiService implements HazardDataSource {
               latitude: userLat + 0.015,
               longitude: userLng - 0.01,
               timestamp: DateTime.now(),
-              confidence: 0.88,
+              confidence: 0.60,
               source: HazardSource.disasterApi,
-              description: 'Active cloudburst and flash flood risk in low-lying sectors.',
-              responderConfirmed: true,
-              supportingReports: 24,
+              description: 'Weather-derived estimate: heavy rain in the forecast for this point — not a responder-confirmed hazard.',
+              responderConfirmed: false,
+              supportingReports: 0,
             ),
           );
         }
