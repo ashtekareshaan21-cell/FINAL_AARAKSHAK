@@ -42,13 +42,13 @@ class _VictimScreenState extends State<VictimScreen> {
   // Form Fields — Phase 0 safety: no worst-case defaults. The user must
   // fill in what is actually happening; nothing is pre-assumed.
   String _selectedCategory = 'Flood';
-  int _casualties = 1;
+  final int _casualties = 1;
   String _medicalStatus = 'Unknown';
-  bool _personTrapped = false;
-  bool _waterRising = false;
-  bool _firePresent = false;
-  bool _structuralInstability = false;
-  bool _requiresEvacuation = false;
+  final bool _personTrapped = false;
+  final bool _waterRising = false;
+  final bool _firePresent = false;
+  final bool _structuralInstability = false;
+  final bool _requiresEvacuation = false;
 
   // Location Fields (Editable & Feedable)
   // Initial coordinates are NOT a confirmed location. SOS is blocked
@@ -384,7 +384,7 @@ class _VictimScreenState extends State<VictimScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.2),
+                color: Colors.redAccent.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.shield_outlined, color: Colors.redAccent, size: 20),
@@ -394,7 +394,7 @@ class _VictimScreenState extends State<VictimScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(AppBrand.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text(AppBrand.tagline, style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.6))),
+                Text(AppBrand.tagline, style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.6))),
               ],
             ),
           ],
@@ -404,9 +404,9 @@ class _VictimScreenState extends State<VictimScreen> {
             margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: (_isOnline ? emeraldColor : Colors.amber).withOpacity(0.2),
+              color: (_isOnline ? emeraldColor : Colors.amber).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: (_isOnline ? emeraldColor : Colors.amber).withOpacity(0.4)),
+              border: Border.all(color: (_isOnline ? emeraldColor : Colors.amber).withValues(alpha: 0.4)),
             ),
             child: Row(
               children: [
@@ -450,7 +450,7 @@ class _VictimScreenState extends State<VictimScreen> {
         color: _locationConfirmed ? const Color(0xFF1E293B) : const Color(0xFF2A1C16),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: _locationConfirmed ? Colors.blueAccent.withOpacity(0.3) : Colors.amber.withOpacity(0.5),
+          color: _locationConfirmed ? Colors.blueAccent.withValues(alpha: 0.3) : Colors.amber.withValues(alpha: 0.5),
         ),
       ),
       child: Column(
@@ -460,7 +460,7 @@ class _VictimScreenState extends State<VictimScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (_locationConfirmed ? Colors.blueAccent : Colors.amber).withOpacity(0.15),
+                  color: (_locationConfirmed ? Colors.blueAccent : Colors.amber).withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -489,7 +489,7 @@ class _VictimScreenState extends State<VictimScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: (_locationConfirmed ? Colors.blue : Colors.amber).withOpacity(0.2),
+                            color: (_locationConfirmed ? Colors.blue : Colors.amber).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -514,7 +514,7 @@ class _VictimScreenState extends State<VictimScreen> {
                     ),
                     Text(
                       'Coords: (${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)})',
-                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
                     ),
                   ],
                 ),
@@ -528,7 +528,7 @@ class _VictimScreenState extends State<VictimScreen> {
                   style: const TextStyle(color: Colors.cyanAccent, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
                 style: TextButton.styleFrom(
-                  backgroundColor: Colors.cyan.withOpacity(0.1),
+                  backgroundColor: Colors.cyan.withValues(alpha: 0.1),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 ),
               ),
@@ -600,7 +600,7 @@ class _VictimScreenState extends State<VictimScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.redAccent.withOpacity(0.4),
+                  color: Colors.redAccent.withValues(alpha: 0.4),
                   blurRadius: 20,
                   spreadRadius: 2,
                   offset: const Offset(0, 6),
@@ -612,7 +612,7 @@ class _VictimScreenState extends State<VictimScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.sos_rounded, color: Colors.white, size: 44),
@@ -625,7 +625,7 @@ class _VictimScreenState extends State<VictimScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Transmits P0 Emergency Packet via Mesh / Off-Grid Transport',
-                  style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.85)),
+                  style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.85)),
                 ),
               ],
             ),
@@ -654,7 +654,7 @@ class _VictimScreenState extends State<VictimScreen> {
                 label: const Text('Detailed Report', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -673,10 +673,10 @@ class _VictimScreenState extends State<VictimScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: statusColor.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: statusColor.withValues(alpha: 0.5), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: statusColor.withOpacity(0.15),
+            color: statusColor.withValues(alpha: 0.15),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -705,7 +705,7 @@ class _VictimScreenState extends State<VictimScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.2),
+                  color: statusColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -723,7 +723,7 @@ class _VictimScreenState extends State<VictimScreen> {
           const SizedBox(height: 4),
           Text(
             incident.description,
-            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12),
           ),
           const SizedBox(height: 14),
           _buildDeliveryProgressTracker(incident.status),
@@ -732,9 +732,9 @@ class _VictimScreenState extends State<VictimScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: emeraldColor.withOpacity(0.15),
+                color: emeraldColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: emeraldColor.withOpacity(0.4)),
+                border: Border.all(color: emeraldColor.withValues(alpha: 0.4)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,7 +748,7 @@ class _VictimScreenState extends State<VictimScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text('Dispatched Unit: ${incident.assignedUnit}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
-                  Text('Estimated Arrival: ~${incident.etaMinutes > 0 ? incident.etaMinutes : 18} minutes', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11)),
+                  Text('Estimated Arrival: ~${incident.etaMinutes > 0 ? incident.etaMinutes : 18} minutes', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11)),
                   if (incident.eocNotes.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text('Instructions: "${incident.eocNotes}"', style: const TextStyle(color: Colors.amberAccent, fontSize: 11, fontStyle: FontStyle.italic)),
@@ -777,7 +777,7 @@ class _VictimScreenState extends State<VictimScreen> {
       children: [
         Text(
           'COMMUNICATION PROGRESS',
-          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8),
         ),
         const SizedBox(height: 8),
         Row(
@@ -794,7 +794,7 @@ class _VictimScreenState extends State<VictimScreen> {
                       ? emeraldColor
                       : isCurrent
                           ? Colors.amber
-                          : Colors.white.withOpacity(0.15),
+                          : Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -815,7 +815,7 @@ class _VictimScreenState extends State<VictimScreen> {
             ),
             Text(
               '${(currentStep / steps.length * 100).round()}%',
-              style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -836,7 +836,7 @@ class _VictimScreenState extends State<VictimScreen> {
             ),
             Text(
               'Location-Aware • Verified',
-              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
             ),
           ],
         ),
@@ -889,14 +889,14 @@ class _VictimScreenState extends State<VictimScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.15),
+              color: iconColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: iconColor, size: 20),
@@ -908,7 +908,7 @@ class _VictimScreenState extends State<VictimScreen> {
               children: [
                 Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 2),
-                Text(statusText, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+                Text(statusText, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11)),
               ],
             ),
           ),
@@ -920,7 +920,7 @@ class _VictimScreenState extends State<VictimScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: badgeColor.withOpacity(0.2),
+                  color: badgeColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(badgeText, style: TextStyle(color: badgeColor, fontSize: 9, fontWeight: FontWeight.bold)),
@@ -936,9 +936,9 @@ class _VictimScreenState extends State<VictimScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: emeraldColor.withOpacity(0.1),
+        color: emeraldColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: emeraldColor.withOpacity(0.3)),
+        border: Border.all(color: emeraldColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -952,7 +952,7 @@ class _VictimScreenState extends State<VictimScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('🟢 SECTOR SAFETY STATUS — $_selectedLocationName', style: const TextStyle(color: emeraldColor, fontWeight: FontWeight.bold, fontSize: 11)),
-                    Text('Updated Live', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 9)),
+                    Text('Updated Live', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 9)),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -997,7 +997,7 @@ class _VictimScreenState extends State<VictimScreen> {
                 ],
               ),
               const SizedBox(height: 4),
-              Text('Pick a landmark or enter coordinates manually. This is a manual location, not live GPS:', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+              Text('Pick a landmark or enter coordinates manually. This is a manual location, not live GPS:', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11)),
               const SizedBox(height: 12),
 
               SizedBox(
@@ -1036,14 +1036,14 @@ class _VictimScreenState extends State<VictimScreen> {
               ..._locationPresets.map((preset) => Container(
                 margin: const EdgeInsets.only(bottom: 6),
                 decoration: BoxDecoration(
-                  color: _selectedLocationName == preset.name ? Colors.cyan.withOpacity(0.2) : const Color(0xFF0F172A),
+                  color: _selectedLocationName == preset.name ? Colors.cyan.withValues(alpha: 0.2) : const Color(0xFF0F172A),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: _selectedLocationName == preset.name ? Colors.cyanAccent : Colors.white10),
                 ),
                 child: ListTile(
                   dense: true,
                   title: Text(preset.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
-                  subtitle: Text('(${preset.lat}, ${preset.lng})', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10)),
+                  subtitle: Text('(${preset.lat}, ${preset.lng})', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10)),
                   trailing: _selectedLocationName == preset.name ? const Icon(Icons.check_circle_rounded, color: Colors.cyanAccent, size: 18) : null,
                   onTap: () {
                     setState(() {
@@ -1054,7 +1054,7 @@ class _VictimScreenState extends State<VictimScreen> {
                     });
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('📍 Location changed to ${_selectedLocationName}')),
+                      SnackBar(content: Text('📍 Location changed to $_selectedLocationName')),
                     );
                   },
                 ),
@@ -1109,7 +1109,7 @@ class _VictimScreenState extends State<VictimScreen> {
                     });
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('📍 Custom location saved: ${_selectedLocationName}')),
+                      SnackBar(content: Text('📍 Custom location saved: $_selectedLocationName')),
                     );
                   }
                 },
@@ -1147,7 +1147,7 @@ class _VictimScreenState extends State<VictimScreen> {
                 style: const TextStyle(color: Colors.white, fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'Describe emergency situation...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
                   filled: true,
                   fillColor: const Color(0xFF0F172A),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -1158,7 +1158,7 @@ class _VictimScreenState extends State<VictimScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _selectedCategory,
+                      initialValue: _selectedCategory,
                       dropdownColor: const Color(0xFF0F172A),
                       style: const TextStyle(color: Colors.white, fontSize: 12),
                       decoration: const InputDecoration(labelText: 'Category', labelStyle: TextStyle(color: Colors.white70)),
@@ -1169,7 +1169,7 @@ class _VictimScreenState extends State<VictimScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _medicalStatus,
+                      initialValue: _medicalStatus,
                       dropdownColor: const Color(0xFF0F172A),
                       style: const TextStyle(color: Colors.white, fontSize: 12),
                       decoration: const InputDecoration(labelText: 'Medical Condition', labelStyle: TextStyle(color: Colors.white70)),
