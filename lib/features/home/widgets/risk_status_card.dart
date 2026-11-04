@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/theme/atmosphere_theme.dart';
 import '../../context_engine/risk_state.dart';
 
@@ -17,13 +18,12 @@ class RiskStatusCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: palette.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: palette.accentColor.withOpacity(0.6), width: 1.5),
+        border: Border.all(
+          color: palette.accentColor.withValues(alpha: 0.6),
+          width: 1.5,
+        ),
         boxShadow: [
-          BoxShadow(
-            color: palette.glowColor,
-            blurRadius: 16,
-            spreadRadius: 1,
-          ),
+          BoxShadow(color: palette.glowColor, blurRadius: 16, spreadRadius: 1),
         ],
       ),
       child: Column(
@@ -63,9 +63,12 @@ class RiskStatusCard extends StatelessWidget {
               const SizedBox(width: 6),
               Flexible(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: palette.statusBadgeColor.withOpacity(0.3),
+                    color: palette.statusBadgeColor.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: palette.accentColor, width: 1),
                   ),
@@ -112,11 +115,19 @@ class RiskStatusCard extends StatelessWidget {
                 children: [
                   Text(
                     'CONFIDENCE',
-                    style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.6), fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     '${(riskState.confidence * 100).toStringAsFixed(0)}%',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -127,7 +138,11 @@ class RiskStatusCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.warning_amber_rounded, size: 16, color: palette.accentColor),
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 16,
+                color: palette.accentColor,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(

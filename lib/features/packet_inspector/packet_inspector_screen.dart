@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../shared/constants/app_brand.dart';
 import '../../core/packet/packet_engine.dart';
 
@@ -62,7 +63,9 @@ class _PacketInspectorScreenState extends State<PacketInspectorScreen> {
     final origBytes = PacketEngine.hexToPacket(_currentHex);
     final targetIdx = _corruptedIndex >= 0 ? (_corruptedIndex + 1) % 48 : 12;
     final corrupted = PacketEngine.corruptByte(origBytes, targetIdx);
-    setState(() { _corruptedIndex = targetIdx; });
+    setState(() {
+      _corruptedIndex = targetIdx;
+    });
     _updatePacketState(corrupted);
   }
 
@@ -81,32 +84,52 @@ class _PacketInspectorScreenState extends State<PacketInspectorScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _isCrcValid ? AppBrand.colorSafe.withOpacity(0.15) : AppBrand.colorCritical.withOpacity(0.15),
+                color: _isCrcValid
+                    ? AppBrand.colorSafe.withValues(alpha: 0.15)
+                    : AppBrand.colorCritical.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _isCrcValid ? AppBrand.colorSafe : AppBrand.colorCritical),
+                border: Border.all(
+                  color: _isCrcValid
+                      ? AppBrand.colorSafe
+                      : AppBrand.colorCritical,
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(_isCrcValid ? Icons.check_circle_outline : Icons.error_outline,
-                      size: 32, color: _isCrcValid ? AppBrand.colorSafe : AppBrand.colorCritical),
+                  Icon(
+                    _isCrcValid
+                        ? Icons.check_circle_outline
+                        : Icons.error_outline,
+                    size: 32,
+                    color: _isCrcValid
+                        ? AppBrand.colorSafe
+                        : AppBrand.colorCritical,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isCrcValid ? 'CHECKSUM VALID (CRC-16 MATCH)' : 'CHECKSUM INVALID — PACKET REJECTED!',
+                          _isCrcValid
+                              ? 'CHECKSUM VALID (CRC-16 MATCH)'
+                              : 'CHECKSUM INVALID — PACKET REJECTED!',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
-                            color: _isCrcValid ? AppBrand.colorSafe : AppBrand.colorCritical,
+                            color: _isCrcValid
+                                ? AppBrand.colorSafe
+                                : AppBrand.colorCritical,
                           ),
                         ),
                         Text(
                           _isCrcValid
                               ? 'CRC-16-CCITT integrity verification passed over all 46 payload bytes.'
                               : 'Bit corruption detected! Final 2-byte CRC checksum does not match decoded bytes.',
-                          style: const TextStyle(fontSize: 11, color: Colors.white70),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.white70,
+                          ),
                         ),
                       ],
                     ),
@@ -124,7 +147,10 @@ class _PacketInspectorScreenState extends State<PacketInspectorScreen> {
                     onPressed: _encodeSamplePacket,
                     icon: const Icon(Icons.refresh, size: 16),
                     label: const Text('GENERATE CANONICAL FRAME'),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppBrand.cardDark, foregroundColor: AppBrand.accentCyan),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppBrand.cardDark,
+                      foregroundColor: AppBrand.accentCyan,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -133,7 +159,10 @@ class _PacketInspectorScreenState extends State<PacketInspectorScreen> {
                     onPressed: _corruptByte,
                     icon: const Icon(Icons.flash_on, size: 16),
                     label: const Text('CORRUPT 1 BYTE'),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppBrand.colorCritical, foregroundColor: Colors.black),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppBrand.colorCritical,
+                      foregroundColor: Colors.black,
+                    ),
                   ),
                 ),
               ],
@@ -141,21 +170,47 @@ class _PacketInspectorScreenState extends State<PacketInspectorScreen> {
             const SizedBox(height: 20),
 
             // Hex Bytes Viewer
-            const Text('RAW 48-BYTE HEXADECIMAL FRAME', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white70)),
+            const Text(
+              'RAW 48-BYTE HEXADECIMAL FRAME',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+                color: Colors.white70,
+              ),
+            ),
             const SizedBox(height: 6),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppBrand.cardBorder)),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppBrand.cardBorder),
+              ),
               child: SelectableText(
-                _currentHex.replaceAllMapped(RegExp(r".{2}"), (match) => "${match.group(0)} "),
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 15, color: AppBrand.accentCyan, letterSpacing: 1.5),
+                _currentHex.replaceAllMapped(
+                  RegExp(r".{2}"),
+                  (match) => "${match.group(0)} ",
+                ),
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 15,
+                  color: AppBrand.accentCyan,
+                  letterSpacing: 1.5,
+                ),
               ),
             ),
             const SizedBox(height: 20),
 
             // Decoded Fields Inspection Table
             if (_decodedPacket != null) ...[
-              const Text('DECODED FIELD BREAKDOWN', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white70)),
+              const Text(
+                'DECODED FIELD BREAKDOWN',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  color: Colors.white70,
+                ),
+              ),
               const SizedBox(height: 8),
               Table(
                 border: TableBorder.all(color: AppBrand.cardBorder, width: 1),
@@ -165,19 +220,72 @@ class _PacketInspectorScreenState extends State<PacketInspectorScreen> {
                   2: FlexColumnWidth(2.5),
                 },
                 children: [
-                  _buildRow('Byte Offset', 'Field Name', 'Decoded Value', isHeader: true),
-                  _buildRow('0x00 [1 B]', 'MAGIC_BYTE', '0x${_decodedPacket!.magicByte.toRadixString(16).toUpperCase()} ("R")'),
-                  _buildRow('0x01 [2 B]', 'PACKET_ID', '${_decodedPacket!.packetId} (0x${_decodedPacket!.packetId.toRadixString(16)})'),
-                  _buildRow('0x03 [4 B]', 'SOURCE_NODE', '0x${_decodedPacket!.sourceNode.toRadixString(16).toUpperCase()}'),
-                  _buildRow('0x07 [1 B]', 'HOP_METRICS', 'TTL: ${_decodedPacket!.ttl} | Hops: ${_decodedPacket!.hops}'),
-                  _buildRow('0x08 [4 B]', 'TIMESTAMP', '${_decodedPacket!.timestamp} (UTC Seconds)'),
-                  _buildRow('0x0C [1 B]', 'TRIAGE_PRIORITY', '${_decodedPacket!.priority}'),
-                  _buildRow('0x0D [4 B]', 'LATITUDE', '${_decodedPacket!.latitude} °'),
-                  _buildRow('0x11 [4 B]', 'LONGITUDE', '${_decodedPacket!.longitude} °'),
-                  _buildRow('0x15 [1 B]', 'BATTERY', '${_decodedPacket!.battery} %'),
-                  _buildRow('0x16 [1 B]', 'HEADCOUNT', 'Adults: ${_decodedPacket!.adults} | Children: ${_decodedPacket!.children}'),
-                  _buildRow('0x17 [23 B]', 'PAYLOAD_TEXT', '"${_decodedPacket!.payloadText}"'),
-                  _buildRow('0x2E [2 B]', 'CRC-16-CCITT', '0x${_decodedPacket!.crc.toRadixString(16).toUpperCase()} [${_isCrcValid ? "VALID" : "INVALID"}]'),
+                  _buildRow(
+                    'Byte Offset',
+                    'Field Name',
+                    'Decoded Value',
+                    isHeader: true,
+                  ),
+                  _buildRow(
+                    '0x00 [1 B]',
+                    'MAGIC_BYTE',
+                    '0x${_decodedPacket!.magicByte.toRadixString(16).toUpperCase()} ("R")',
+                  ),
+                  _buildRow(
+                    '0x01 [2 B]',
+                    'PACKET_ID',
+                    '${_decodedPacket!.packetId} (0x${_decodedPacket!.packetId.toRadixString(16)})',
+                  ),
+                  _buildRow(
+                    '0x03 [4 B]',
+                    'SOURCE_NODE',
+                    '0x${_decodedPacket!.sourceNode.toRadixString(16).toUpperCase()}',
+                  ),
+                  _buildRow(
+                    '0x07 [1 B]',
+                    'HOP_METRICS',
+                    'TTL: ${_decodedPacket!.ttl} | Hops: ${_decodedPacket!.hops}',
+                  ),
+                  _buildRow(
+                    '0x08 [4 B]',
+                    'TIMESTAMP',
+                    '${_decodedPacket!.timestamp} (UTC Seconds)',
+                  ),
+                  _buildRow(
+                    '0x0C [1 B]',
+                    'TRIAGE_PRIORITY',
+                    '${_decodedPacket!.priority}',
+                  ),
+                  _buildRow(
+                    '0x0D [4 B]',
+                    'LATITUDE',
+                    '${_decodedPacket!.latitude} °',
+                  ),
+                  _buildRow(
+                    '0x11 [4 B]',
+                    'LONGITUDE',
+                    '${_decodedPacket!.longitude} °',
+                  ),
+                  _buildRow(
+                    '0x15 [1 B]',
+                    'BATTERY',
+                    '${_decodedPacket!.battery} %',
+                  ),
+                  _buildRow(
+                    '0x16 [1 B]',
+                    'HEADCOUNT',
+                    'Adults: ${_decodedPacket!.adults} | Children: ${_decodedPacket!.children}',
+                  ),
+                  _buildRow(
+                    '0x17 [23 B]',
+                    'PAYLOAD_TEXT',
+                    '"${_decodedPacket!.payloadText}"',
+                  ),
+                  _buildRow(
+                    '0x2E [2 B]',
+                    'CRC-16-CCITT',
+                    '0x${_decodedPacket!.crc.toRadixString(16).toUpperCase()} [${_isCrcValid ? "VALID" : "INVALID"}]',
+                  ),
                 ],
               ),
             ],
@@ -187,21 +295,49 @@ class _PacketInspectorScreenState extends State<PacketInspectorScreen> {
     );
   }
 
-  TableRow _buildRow(String offset, String name, String val, {bool isHeader = false}) {
+  TableRow _buildRow(
+    String offset,
+    String name,
+    String val, {
+    bool isHeader = false,
+  }) {
     return TableRow(
-      decoration: BoxDecoration(color: isHeader ? AppBrand.cardDark : Colors.transparent),
+      decoration: BoxDecoration(
+        color: isHeader ? AppBrand.cardDark : Colors.transparent,
+      ),
       children: [
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Text(offset, style: TextStyle(fontSize: 10, fontWeight: isHeader ? FontWeight.bold : FontWeight.normal, color: AppBrand.accentCyan)),
+          child: Text(
+            offset,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+              color: AppBrand.accentCyan,
+            ),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Text(name, style: TextStyle(fontSize: 10, fontWeight: isHeader ? FontWeight.bold : FontWeight.w600, color: Colors.white)),
+          child: Text(
+            name,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: isHeader ? FontWeight.bold : FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Text(val, style: TextStyle(fontSize: 10, fontWeight: isHeader ? FontWeight.bold : FontWeight.normal, color: Colors.white70)),
+          child: Text(
+            val,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+              color: Colors.white70,
+            ),
+          ),
         ),
       ],
     );

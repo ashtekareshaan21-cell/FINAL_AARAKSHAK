@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 class WindParticle {
@@ -70,7 +71,12 @@ class AnimatedWindVectorPainter extends CustomPainter {
 
   void _drawCloudLayer(Canvas canvas, Size size, double dirX, double dirY) {
     final cloudPaint = Paint()
-      ..color = Colors.white.withOpacity((cloudCoveragePercent / 100.0 * 0.28 * cloudOpacity).clamp(0.0, 0.45))
+      ..color = Colors.white.withValues(
+        alpha: (cloudCoveragePercent / 100.0 * 0.28 * cloudOpacity).clamp(
+          0.0,
+          0.45,
+        ),
+      )
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24);
 
     final shift = animationValue * 40.0;
@@ -79,8 +85,15 @@ class AnimatedWindVectorPainter extends CustomPainter {
     // Create organic cloud wisps
     final numClouds = (cloudCoveragePercent / 15).clamp(3, 10).toInt();
     for (int i = 0; i < numClouds; i++) {
-      final cx = (size.width * (0.15 + (i * 0.18)) + (dirX * shift * (i + 1))) % (size.width + 100) - 50;
-      final cy = (size.height * (0.2 + ((i * 37) % 60) / 100.0) + (dirY * shift * (i + 1))) % (size.height + 100) - 50;
+      final cx =
+          (size.width * (0.15 + (i * 0.18)) + (dirX * shift * (i + 1))) %
+              (size.width + 100) -
+          50;
+      final cy =
+          (size.height * (0.2 + ((i * 37) % 60) / 100.0) +
+                  (dirY * shift * (i + 1))) %
+              (size.height + 100) -
+          50;
       final radius = 50.0 + (i * 12.0);
 
       path.addOval(Rect.fromCircle(center: Offset(cx, cy), radius: radius));
@@ -92,7 +105,7 @@ class AnimatedWindVectorPainter extends CustomPainter {
   void _drawWindVectorGrid(Canvas canvas, Size size, double dirX, double dirY) {
     const gridSpacing = 65.0;
     final mathAngle = math.atan2(dirY, dirX);
-    final arrowColor = _getWindColor(windSpeedKmh).withOpacity(0.45);
+    final arrowColor = _getWindColor(windSpeedKmh).withValues(alpha: 0.45);
 
     final arrowPaint = Paint()
       ..color = arrowColor
@@ -114,8 +127,14 @@ class AnimatedWindVectorPainter extends CustomPainter {
         final headAngle2 = mathAngle + math.pi + 0.4;
         const headLen = 5.0;
 
-        final p1 = Offset(end.dx + math.cos(headAngle1) * headLen, end.dy + math.sin(headAngle1) * headLen);
-        final p2 = Offset(end.dx + math.cos(headAngle2) * headLen, end.dy + math.sin(headAngle2) * headLen);
+        final p1 = Offset(
+          end.dx + math.cos(headAngle1) * headLen,
+          end.dy + math.sin(headAngle1) * headLen,
+        );
+        final p2 = Offset(
+          end.dx + math.cos(headAngle2) * headLen,
+          end.dy + math.sin(headAngle2) * headLen,
+        );
 
         canvas.drawLine(end, p1, arrowPaint);
         canvas.drawLine(end, p2, arrowPaint);
@@ -150,7 +169,7 @@ class AnimatedWindVectorPainter extends CustomPainter {
       final alpha = (fade * 0.75).clamp(0.1, 0.9);
 
       final trailPaint = Paint()
-        ..color = particleColor.withOpacity(alpha * 0.6)
+        ..color = particleColor.withValues(alpha: alpha * 0.6)
         ..strokeWidth = p.size
         ..strokeCap = StrokeCap.round;
 
@@ -161,7 +180,7 @@ class AnimatedWindVectorPainter extends CustomPainter {
       canvas.drawLine(tail, head, trailPaint);
 
       final headPaint = Paint()
-        ..color = Colors.white.withOpacity(alpha)
+        ..color = Colors.white.withValues(alpha: alpha)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(head, p.size * 0.7, headPaint);
     }

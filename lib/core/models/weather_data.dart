@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Weather model representing parameters from Open-Meteo & IMD feeds
 class WeatherData {
   final double temperature;

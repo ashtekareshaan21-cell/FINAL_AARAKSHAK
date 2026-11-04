@@ -106,7 +106,7 @@ class LocationService {
 
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 5),
+        timeLimit: const Duration(seconds: 12),
       );
 
       _currentLocation = LocationData(
@@ -202,6 +202,24 @@ class LocationService {
       isMockedOrFallback: true,
       label: label,
       address: 'Simulated Sector Coordinates',
+      isLiveTracking: false,
+    );
+    _locationController.add(_currentLocation);
+    _resolveAddress(lat, lng);
+  }
+
+  /// Explicit user-selected manual location. Marked confirmed (isMockedOrFallback = false)
+  /// so that Home and SOS allow emergency actions.
+  void updateManualLocation(double lat, double lng, {required String label}) {
+    _positionSubscription?.cancel();
+    _currentLocation = LocationData(
+      latitude: lat,
+      longitude: lng,
+      accuracy: 10.0,
+      timestamp: DateTime.now(),
+      isMockedOrFallback: false,
+      label: label,
+      address: 'Manual Location Confirmed',
       isLiveTracking: false,
     );
     _locationController.add(_currentLocation);

@@ -318,14 +318,14 @@ class HomeScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Icon(
-                        isDemoLocation ? Icons.science_rounded : Icons.radar_rounded,
+                        isDemoLocation ? Icons.warning_amber_rounded : Icons.radar_rounded,
                         color: isDemoLocation ? Colors.orangeAccent : const Color(0xFF10B981),
                         size: 15,
                       ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          location.label,
+                          isDemoLocation ? '⚠️ Location Not Confirmed (Tap to set)' : location.label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -336,13 +336,13 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: isDemoLocation ? Colors.orangeAccent : const Color(0xFF10B981),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          isDemoLocation ? 'DEMO / TEST' : '📡 STREAMING LIVE',
+                          isDemoLocation ? 'TAP TO CONFIRM 📍' : '📡 STREAMING LIVE',
                           style: const TextStyle(
                             fontSize: 8,
                             fontWeight: FontWeight.w900,
@@ -361,7 +361,9 @@ class HomeScreen extends ConsumerWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          '${location.address} • (${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)})',
+                          isDemoLocation
+                              ? 'Tap here to enable Live GPS or pick a manual landmark'
+                              : '${location.address} • (${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)})',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

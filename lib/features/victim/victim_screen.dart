@@ -126,9 +126,17 @@ class _VictimScreenState extends State<VictimScreen> {
       // Battery unknown (255) is kept; never claim a fixed level.
     }
     try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        throw Exception('Location permission denied');
+      }
+
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 5),
+        timeLimit: const Duration(seconds: 12),
       );
       if (mounted) {
         setState(() {
@@ -143,7 +151,7 @@ class _VictimScreenState extends State<VictimScreen> {
       if (mounted) {
         setState(() {
           _selectedLocationName =
-              'GPS unavailable — pick a manual location below';
+              'GPS unavailable — pick manual location or retry';
           _locationConfirmed = false;
         });
       }
@@ -434,62 +442,137 @@ class _VictimScreenState extends State<VictimScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: _locationConfirmed ? const Color(0xFF1E293B) : const Color(0xFF2A1C16),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+        border: Border.all(
+          color: _locationConfirmed ? Colors.blueAccent.withOpacity(0.3) : Colors.amber.withOpacity(0.5),
+        ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.blueAccent.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.my_location_rounded, color: Colors.blueAccent, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 6,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: (_locationConfirmed ? Colors.blueAccent : Colors.amber).withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _locationConfirmed ? Icons.my_location_rounded : Icons.location_off_rounded,
+                  color: _locationConfirmed ? Colors.blueAccent : Colors.amber,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Location Verified', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text('GPS READY ±${_gpsAccuracy.toStringAsFixed(0)}m', style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 9, fontWeight: FontWeight.bold)),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      children: [
+                        Text(
+                          _locationConfirmed ? 'Location Confirmed' : 'Location Not Confirmed',
+                          style: TextStyle(
+                            color: _locationConfirmed ? Colors.white : Colors.amberAccent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: (_locationConfirmed ? Colors.blue : Colors.amber).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            _locationConfirmed
+                                ? (_selectedLocationName.startsWith('Live GPS')
+                                    ? 'GPS READY ±${_gpsAccuracy.toStringAsFixed(0)}m'
+                                    : 'MANUAL CONFIRMED')
+                                : 'ACTION REQUIRED',
+                            style: TextStyle(
+                              color: _locationConfirmed ? Colors.lightBlueAccent : Colors.amberAccent,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _selectedLocationName,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
+                    ),
+                    Text(
+                      'Coords: (${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)})',
+                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  _selectedLocationName,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
+              ),
+              // Interactive Location Change & Feed Button
+              TextButton.icon(
+                onPressed: () => _openLocationPickerModal(),
+                icon: const Icon(Icons.edit_location_alt_rounded, color: Colors.cyanAccent, size: 16),
+                label: Text(
+                  _locationConfirmed ? 'CHANGE' : 'CHOOSE',
+                  style: const TextStyle(color: Colors.cyanAccent, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
-                Text(
-                  'Coords: (${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)})',
-                  style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.cyan.withOpacity(0.1),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                ),
+              ),
+            ],
+          ),
+          if (!_locationConfirmed) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      await _loadRealBatteryAndGps();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(_locationConfirmed
+                                ? '🟢 Live GPS confirmed: ${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)}'
+                                : '⚠️ GPS unavailable or permission denied — pick a manual landmark below.'),
+                            backgroundColor: _locationConfirmed ? const Color(0xFF10B981) : Colors.amber[800],
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.refresh_rounded, size: 14),
+                    label: const Text('RETRY GPS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openLocationPickerModal(),
+                    icon: const Icon(Icons.touch_app_rounded, size: 14),
+                    label: const Text('MANUAL LANDMARK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.cyanAccent,
+                      side: const BorderSide(color: Colors.cyanAccent),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          // Interactive Location Change & Feed Button
-          TextButton.icon(
-            onPressed: () => _openLocationPickerModal(),
-            icon: const Icon(Icons.edit_location_alt_rounded, color: Colors.cyanAccent, size: 16),
-            label: const Text('CHANGE', style: TextStyle(color: Colors.cyanAccent, fontSize: 10, fontWeight: FontWeight.bold)),
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.cyan.withOpacity(0.1),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -911,12 +994,38 @@ class _VictimScreenState extends State<VictimScreen> {
               const SizedBox(height: 4),
               Text('Pick a landmark or enter coordinates manually. This is a manual location, not live GPS:', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
               const SizedBox(height: 12),
-              // Phase 0 safety: the random test-location generator is
-              // removed from this screen. Random sectors must never
-              // become an SOS location.
+
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await _loadRealBatteryAndGps();
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(this.context).showSnackBar(
+                      SnackBar(
+                        content: Text(_locationConfirmed
+                            ? '🟢 Live Device GPS confirmed: ${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)}'
+                            : '⚠️ GPS unavailable or permission denied — pick a manual landmark below.'),
+                        backgroundColor: _locationConfirmed ? const Color(0xFF10B981) : Colors.amber[800],
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.my_location_rounded, color: Color(0xFF10B981), size: 18),
+                  label: const Text(
+                    'USE REAL DEVICE GPS LOCATION',
+                    style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 11),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 14),
-              const Text('Preset Regional Landmarks:', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+              const Text('Preset Regional Landmarks (Manual Confirmation):', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
 
               ..._locationPresets.map((preset) => Container(

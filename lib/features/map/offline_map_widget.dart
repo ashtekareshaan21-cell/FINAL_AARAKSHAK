@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+
 import '../hazards/hazard_model.dart';
 import '../assistance/assistance_model.dart';
 import '../sos/sos_packet.dart';
@@ -31,14 +32,11 @@ class OfflineMapWidget extends StatelessWidget {
         height: 240,
         decoration: BoxDecoration(
           color: const Color(0xFF0F172A),
-          border: Border.all(color: Colors.white.withOpacity(0.12)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           borderRadius: BorderRadius.circular(16),
         ),
         child: FlutterMap(
-          options: MapOptions(
-            initialCenter: userCenter,
-            initialZoom: 12.5,
-          ),
+          options: MapOptions(initialCenter: userCenter, initialZoom: 12.5),
           children: [
             // Tile layer with offline grid fallback styling
             TileLayer(
@@ -47,10 +45,26 @@ class OfflineMapWidget extends StatelessWidget {
               tileBuilder: (context, tileWidget, tile) {
                 return ColorFiltered(
                   colorFilter: const ColorFilter.matrix(<double>[
-                    -0.2126, -0.7152, -0.0722, 0, 255,
-                    -0.2126, -0.7152, -0.0722, 0, 255,
-                    -0.2126, -0.7152, -0.0722, 0, 255,
-                    0, 0, 0, 1, 0,
+                    -0.2126,
+                    -0.7152,
+                    -0.0722,
+                    0,
+                    255,
+                    -0.2126,
+                    -0.7152,
+                    -0.0722,
+                    0,
+                    255,
+                    -0.2126,
+                    -0.7152,
+                    -0.0722,
+                    0,
+                    255,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
                   ]),
                   child: tileWidget,
                 );
@@ -64,7 +78,7 @@ class OfflineMapWidget extends StatelessWidget {
                   point: userCenter,
                   radius: 5000, // 5 km
                   useRadiusInMeter: true,
-                  color: Colors.red.withOpacity(0.15),
+                  color: Colors.red.withValues(alpha: 0.15),
                   borderColor: Colors.redAccent,
                   borderStrokeWidth: 1.5,
                 ),
@@ -72,8 +86,8 @@ class OfflineMapWidget extends StatelessWidget {
                   point: userCenter,
                   radius: 25000, // 25 km
                   useRadiusInMeter: true,
-                  color: Colors.amber.withOpacity(0.05),
-                  borderColor: Colors.amber.withOpacity(0.6),
+                  color: Colors.amber.withValues(alpha: 0.05),
+                  borderColor: Colors.amber.withValues(alpha: 0.6),
                   borderStrokeWidth: 1.0,
                 ),
               ],
@@ -93,10 +107,18 @@ class OfflineMapWidget extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                       boxShadow: const [
-                        BoxShadow(color: Colors.blue, blurRadius: 8, spreadRadius: 2),
+                        BoxShadow(
+                          color: Colors.blue,
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        ),
                       ],
                     ),
-                    child: const Icon(Icons.my_location_rounded, color: Colors.white, size: 18),
+                    child: const Icon(
+                      Icons.my_location_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ),
 
@@ -108,7 +130,8 @@ class OfflineMapWidget extends StatelessWidget {
                     width: 30,
                     height: 30,
                     child: Tooltip(
-                      message: '${h.title} (${(h.severity * 100).toInt()}% severity)',
+                      message:
+                          '${h.title} (${(h.severity * 100).toInt()}% severity)',
                       child: Container(
                         decoration: BoxDecoration(
                           color: isCritical ? Colors.redAccent : Colors.amber,
@@ -116,14 +139,16 @@ class OfflineMapWidget extends StatelessWidget {
                           border: Border.all(color: Colors.black, width: 1.5),
                         ),
                         child: Icon(
-                          isCritical ? Icons.warning_rounded : Icons.report_problem_rounded,
+                          isCritical
+                              ? Icons.warning_rounded
+                              : Icons.report_problem_rounded,
                           color: Colors.black,
                           size: 16,
                         ),
                       ),
                     ),
                   );
-                }).toList(),
+                }),
 
                 // Assistance Point Markers
                 ...assistancePoints.map((p) {
@@ -144,7 +169,7 @@ class OfflineMapWidget extends StatelessWidget {
                       ),
                     ),
                   );
-                }).toList(),
+                }),
 
                 // Active SOS Marker
                 if (activeSos != null)
@@ -158,10 +183,18 @@ class OfflineMapWidget extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2.5),
                         boxShadow: const [
-                          BoxShadow(color: Color(0xFFFF2E4C), blurRadius: 12, spreadRadius: 3),
+                          BoxShadow(
+                            color: Color(0xFFFF2E4C),
+                            blurRadius: 12,
+                            spreadRadius: 3,
+                          ),
                         ],
                       ),
-                      child: const Icon(Icons.emergency_rounded, color: Colors.white, size: 22),
+                      child: const Icon(
+                        Icons.emergency_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
                   ),
               ],

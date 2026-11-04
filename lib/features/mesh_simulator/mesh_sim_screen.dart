@@ -1,5 +1,7 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
+
 import '../../shared/constants/app_brand.dart';
 import '../../core/networking/mesh_simulator_engine.dart';
 import '../../core/packet/packet_engine.dart';
@@ -16,7 +18,9 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
   bool _isSimulating = false;
 
   Future<void> _injectTestSOS({bool corrupt = false}) async {
-    setState(() { _isSimulating = true; });
+    setState(() {
+      _isSimulating = true;
+    });
 
     final packet = EmergencyPacket(
       packetId: Random().nextInt(60000),
@@ -41,7 +45,9 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
       startNodeId: 'CITIZEN-01',
     );
 
-    setState(() { _isSimulating = false; });
+    setState(() {
+      _isSimulating = false;
+    });
   }
 
   @override
@@ -68,17 +74,41 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildMetricItem('DELIVERY RATIO', '${metrics.deliveryRatio.toStringAsFixed(1)}%', AppBrand.colorSafe),
+                  _buildMetricItem(
+                    'DELIVERY RATIO',
+                    '${metrics.deliveryRatio.toStringAsFixed(1)}%',
+                    AppBrand.colorSafe,
+                  ),
                   const SizedBox(width: 16),
-                  _buildMetricItem('AVG LATENCY', '${metrics.avgLatencyMs} ms', AppBrand.accentCyan),
+                  _buildMetricItem(
+                    'AVG LATENCY',
+                    '${metrics.avgLatencyMs} ms',
+                    AppBrand.accentCyan,
+                  ),
                   const SizedBox(width: 16),
-                  _buildMetricItem('P95 LATENCY', '${metrics.p95LatencyMs} ms', AppBrand.accentAmber),
+                  _buildMetricItem(
+                    'P95 LATENCY',
+                    '${metrics.p95LatencyMs} ms',
+                    AppBrand.accentAmber,
+                  ),
                   const SizedBox(width: 16),
-                  _buildMetricItem('AVG HOPS', metrics.avgHops.toStringAsFixed(1), Colors.white),
+                  _buildMetricItem(
+                    'AVG HOPS',
+                    metrics.avgHops.toStringAsFixed(1),
+                    Colors.white,
+                  ),
                   const SizedBox(width: 16),
-                  _buildMetricItem('CRC FAILURES', '${metrics.crcFailures}', AppBrand.colorCritical),
+                  _buildMetricItem(
+                    'CRC FAILURES',
+                    '${metrics.crcFailures}',
+                    AppBrand.colorCritical,
+                  ),
                   const SizedBox(width: 16),
-                  _buildMetricItem('DUPES BLOCKED', '${metrics.duplicatesSuppressed}', AppBrand.colorNeeds),
+                  _buildMetricItem(
+                    'DUPES BLOCKED',
+                    '${metrics.duplicatesSuppressed}',
+                    AppBrand.colorNeeds,
+                  ),
                 ],
               ),
             ),
@@ -105,8 +135,14 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('SIMULATOR CONTROLS & CHAOS ENGINE',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70)),
+                      const Text(
+                        'SIMULATOR CONTROLS & CHAOS ENGINE',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white70,
+                        ),
+                      ),
                       const SizedBox(height: 8),
 
                       Wrap(
@@ -114,47 +150,87 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
                         runSpacing: 6,
                         children: [
                           ElevatedButton.icon(
-                            onPressed: _isSimulating ? null : () => _injectTestSOS(corrupt: false),
+                            onPressed: _isSimulating
+                                ? null
+                                : () => _injectTestSOS(corrupt: false),
                             icon: const Icon(Icons.send, size: 14),
-                            label: const Text('INJECT SOS', style: TextStyle(fontSize: 10)),
-                            style: ElevatedButton.styleFrom(backgroundColor: AppBrand.accentCyan),
+                            label: const Text(
+                              'INJECT SOS',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppBrand.accentCyan,
+                            ),
                           ),
                           ElevatedButton.icon(
-                            onPressed: _isSimulating ? null : () => _injectTestSOS(corrupt: true),
+                            onPressed: _isSimulating
+                                ? null
+                                : () => _injectTestSOS(corrupt: true),
                             icon: const Icon(Icons.bug_report, size: 14),
-                            label: const Text('CORRUPT CRC', style: TextStyle(fontSize: 10)),
-                            style: ElevatedButton.styleFrom(backgroundColor: AppBrand.colorCritical),
+                            label: const Text(
+                              'CORRUPT CRC',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppBrand.colorCritical,
+                            ),
                           ),
                           ElevatedButton.icon(
-                            onPressed: () => setState(() => _engine.severRegion(!_engine.isRegionSevered)),
+                            onPressed: () => setState(
+                              () =>
+                                  _engine.severRegion(!_engine.isRegionSevered),
+                            ),
                             icon: const Icon(Icons.flash_off, size: 14),
-                            label: Text(_engine.isRegionSevered ? 'RESTORE SECTOR' : 'SEVER SECTOR', style: const TextStyle(fontSize: 10)),
-                            style: ElevatedButton.styleFrom(backgroundColor: AppBrand.accentAmber),
+                            label: Text(
+                              _engine.isRegionSevered
+                                  ? 'RESTORE SECTOR'
+                                  : 'SEVER SECTOR',
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppBrand.accentAmber,
+                            ),
                           ),
                           ElevatedButton.icon(
-                            onPressed: () => setState(() => _engine.runChaosTest()),
+                            onPressed: () =>
+                                setState(() => _engine.runChaosTest()),
                             icon: const Icon(Icons.shuffle, size: 14),
-                            label: const Text('CHAOS TEST', style: TextStyle(fontSize: 10)),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.purpleAccent),
+                            label: const Text(
+                              'CHAOS TEST',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purpleAccent,
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       const Divider(color: AppBrand.cardBorder),
 
-                      const Text('REALTIME PACKET HOP TRACE LOG',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppBrand.accentCyan)),
+                      const Text(
+                        'REALTIME PACKET HOP TRACE LOG',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppBrand.accentCyan,
+                        ),
+                      ),
                       const SizedBox(height: 6),
 
                       // Terminal Log Stream
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           child: ListView.builder(
                             itemCount: _engine.hopLog.length,
                             itemBuilder: (context, idx) {
-                              final log = _engine.hopLog[_engine.hopLog.length - 1 - idx];
+                              final log = _engine
+                                  .hopLog[_engine.hopLog.length - 1 - idx];
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 6.0),
                                 child: Text(
@@ -162,7 +238,11 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
                                   style: TextStyle(
                                     fontFamily: 'monospace',
                                     fontSize: 10,
-                                    color: log.isCrcValid ? (log.description.contains('DELIVERED') ? AppBrand.colorSafe : Colors.white70) : AppBrand.colorCritical,
+                                    color: log.isCrcValid
+                                        ? (log.description.contains('DELIVERED')
+                                              ? AppBrand.colorSafe
+                                              : Colors.white70)
+                                        : AppBrand.colorCritical,
                                   ),
                                 ),
                               );
@@ -192,7 +272,6 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
               },
             ),
           ),
-
         ],
       ),
     );
@@ -201,8 +280,22 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
   Widget _buildMetricItem(String label, String val, Color color) {
     return Column(
       children: [
-        Text(val, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color)),
-        Text(label, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white54)),
+        Text(
+          val,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 8,
+            fontWeight: FontWeight.bold,
+            color: Colors.white54,
+          ),
+        ),
       ],
     );
   }
@@ -215,7 +308,7 @@ class _TopologyPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paintLine = Paint()
-      ..color = AppBrand.cardBorder.withOpacity(0.4)
+      ..color = AppBrand.cardBorder.withValues(alpha: 0.4)
       ..strokeWidth = 1.0;
 
     final paintNode = Paint()..style = PaintingStyle.fill;
@@ -224,7 +317,10 @@ class _TopologyPainter extends CustomPainter {
     Offset toOffset(SimNode node) {
       double x = (node.longitude - 73.81) / (73.90 - 73.81) * size.width;
       double y = (18.56 - node.latitude) / (18.56 - 18.48) * size.height;
-      return Offset(x.clamp(20.0, size.width - 20), y.clamp(20.0, size.height - 20));
+      return Offset(
+        x.clamp(20.0, size.width - 20),
+        y.clamp(20.0, size.height - 20),
+      );
     }
 
     final nodeOffsets = <String, Offset>{};
@@ -237,7 +333,10 @@ class _TopologyPainter extends CustomPainter {
       if (!n1.isOnline) return;
       nodes.forEach((id2, n2) {
         if (id1 != id2 && n2.isOnline) {
-          double dist = sqrt(pow(n1.latitude - n2.latitude, 2) + pow(n1.longitude - n2.longitude, 2));
+          double dist = sqrt(
+            pow(n1.latitude - n2.latitude, 2) +
+                pow(n1.longitude - n2.longitude, 2),
+          );
           if (dist < 0.035) {
             canvas.drawLine(nodeOffsets[id1]!, nodeOffsets[id2]!, paintLine);
           }

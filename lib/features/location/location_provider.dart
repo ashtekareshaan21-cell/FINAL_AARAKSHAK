@@ -41,6 +41,11 @@ class LocationNotifier extends StateNotifier<LocationData> {
     state = _service.currentLocation;
   }
 
+  void setManualLocation(double lat, double lng, {String label = 'Manual Location'}) {
+    _service.updateManualLocation(lat, lng, label: label);
+    state = _service.currentLocation;
+  }
+
   @override
   void dispose() {
     _subscription?.cancel();

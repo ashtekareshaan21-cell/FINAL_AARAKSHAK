@@ -115,11 +115,14 @@ class _LocationSelectorModalState extends ConsumerState<LocationSelectorModal> {
               onPressed: () async {
                 await ref.read(locationStateProvider.notifier).refreshLocation();
                 if (context.mounted) {
+                  final loc = ref.read(locationStateProvider);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('🟢 Real Device GPS Restored'),
-                      backgroundColor: const Color(0xFF10B981),
+                    SnackBar(
+                      content: Text(loc.isMockedOrFallback
+                          ? '⚠️ GPS unavailable or permission denied'
+                          : '🟢 Real Device GPS Restored: ${loc.latitude.toStringAsFixed(4)}, ${loc.longitude.toStringAsFixed(4)}'),
+                      backgroundColor: loc.isMockedOrFallback ? Colors.amber[800] : const Color(0xFF10B981),
                     ),
                   );
                 }
@@ -179,7 +182,7 @@ class _LocationSelectorModalState extends ConsumerState<LocationSelectorModal> {
                     ? const Icon(Icons.check_circle_rounded, color: Colors.cyanAccent, size: 18)
                     : const Icon(Icons.chevron_right_rounded, color: Colors.white30, size: 18),
                 onTap: () {
-                  ref.read(locationStateProvider.notifier).setSimulatedLocation(
+                  ref.read(locationStateProvider.notifier).setManualLocation(
                         preset.lat,
                         preset.lng,
                         label: preset.name,
@@ -237,7 +240,7 @@ class _LocationSelectorModalState extends ConsumerState<LocationSelectorModal> {
                   final lat = double.tryParse(_latController.text);
                   final lng = double.tryParse(_lngController.text);
                   if (lat != null && lng != null) {
-                    ref.read(locationStateProvider.notifier).setSimulatedLocation(
+                    ref.read(locationStateProvider.notifier).setManualLocation(
                           lat,
                           lng,
                           label: 'Custom (${lat.toStringAsFixed(3)}, ${lng.toStringAsFixed(3)})',

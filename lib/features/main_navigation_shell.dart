@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'home/home_screen.dart';
 import 'disaster_radar/disaster_radar_screen.dart';
 import 'command_center/command_screen.dart';
@@ -24,15 +25,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF1E293B),
           border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(0.08), width: 1),
+            top: BorderSide(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
+            ),
           ),
         ),
         child: BottomNavigationBar(
@@ -87,4 +88,3 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     }
   }
 }
-

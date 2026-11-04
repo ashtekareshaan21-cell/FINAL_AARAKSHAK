@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../hazards/hazard_model.dart';
 import '../../../core/utils/distance_utils.dart';
 import '../../../core/utils/geo_utils.dart';
@@ -63,15 +64,21 @@ class HazardBanner extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: isCriticalZone ? Colors.redAccent : Colors.amber,
+                          color: isCriticalZone
+                              ? Colors.redAccent
+                              : Colors.amber,
                         ),
                         softWrap: true,
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: (isCriticalZone ? Colors.red : Colors.amber).withOpacity(0.2),
+                        color: (isCriticalZone ? Colors.red : Colors.amber)
+                            .withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -79,7 +86,9 @@ class HazardBanner extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: isCriticalZone ? Colors.redAccent : Colors.amber,
+                          color: isCriticalZone
+                              ? Colors.redAccent
+                              : Colors.amber,
                         ),
                       ),
                     ),
@@ -92,7 +101,7 @@ class HazardBanner extends StatelessWidget {
                       : 'Active hazard reported near coordinates.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                     height: 1.3,
                   ),
                   softWrap: true,
@@ -106,7 +115,7 @@ class HazardBanner extends StatelessWidget {
                       'Confidence: ${(hazard.confidence * 100).toStringAsFixed(0)}%',
                       style: TextStyle(
                         fontSize: 10,
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -114,13 +123,12 @@ class HazardBanner extends StatelessWidget {
                       'Source: ${hazard.source.name}',
                       style: TextStyle(
                         fontSize: 10,
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-
               ],
             ),
           ),
