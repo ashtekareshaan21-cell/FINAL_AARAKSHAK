@@ -41,11 +41,6 @@ class LocationNotifier extends StateNotifier<LocationData> {
     state = _service.currentLocation;
   }
 
-  void generateRandomLocation() {
-    _service.generateRandomLocation();
-    state = _service.currentLocation;
-  }
-
   @override
   void dispose() {
     _subscription?.cancel();
