@@ -37,10 +37,13 @@ class HomeScreen extends ConsumerWidget {
 
     final palette = AtmosphereTheme.getPaletteForRiskLevel(riskState.level);
 
-    // Phase 0 safety: simulation must never make live weather look live
-    // or offline. Weather liveness is gated by WeatherSnapshot.stateTag
-    // in WeatherSummaryCard; simulation only suppresses the live badge.
-    final bool isOnline = !simState.isSimulationActive;
+    // Phase 1: real connectivity from connectivity_plus. While the
+    // stream is still loading, fall back to "not online" rather than
+    // claiming ONLINE. Simulation never creates an online state.
+    final bool isOnline = ref.watch(isOnlineProvider).maybeWhen(
+      data: (online) => online && !simState.isSimulationActive,
+      orElse: () => false,
+    );
 
     return Scaffold(
       backgroundColor: palette.backgroundColor,
@@ -89,9 +92,11 @@ class HomeScreen extends ConsumerWidget {
                       EmergencyActionPanel(
                         activeSos: activeSos,
                         onTriggerSos: () {
-                          // Phase 0 safety: never send a Home SOS from an
-                          // unconfirmed / fallback location.
-                          if (location.isMockedOrFallback) {
+                          // Never send a Home SOS from an unconfirmed /
+                          // fallback location. An explicit manual pick
+                          // counts as confirmed (labelled MANUAL, never
+                          // presented as live GPS).
+                          if (!location.isConfirmedForUse) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -342,7 +347,11 @@ class HomeScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          isDemoLocation ? 'TAP TO CONFIRM 📍' : '📡 STREAMING LIVE',
+                          location.isManualConfirmed
+                              ? 'MANUAL'
+                              : isDemoLocation
+                                  ? 'TAP TO CONFIRM 📍'
+                                  : '📡 STREAMING LIVE',
                           style: const TextStyle(
                             fontSize: 8,
                             fontWeight: FontWeight.w900,

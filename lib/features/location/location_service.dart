@@ -12,6 +12,13 @@ class LocationData {
   final double heading;
   final DateTime timestamp;
   final bool isMockedOrFallback;
+  // Phase 1 fix: an explicit manual pick (preset landmark or custom
+  // lat/lng typed by the user) is NOT live GPS, but it IS a confirmed
+  // location — the user chose those exact coordinates. It must not
+  // be lumped in with the unconfirmed Pune placeholder fallback.
+  // isMockedOrFallback stays true for manual picks so the UI keeps
+  // labelling them MANUAL instead of STREAMING LIVE.
+  final bool isManualConfirmed;
   final String label;
   final String address;
   final bool isLiveTracking;
@@ -24,10 +31,15 @@ class LocationData {
     this.heading = 0.0,
     required this.timestamp,
     this.isMockedOrFallback = false,
+    this.isManualConfirmed = false,
     this.label = 'GPS Location',
     this.address = 'Fetching street address...',
     this.isLiveTracking = false,
   });
+
+  // Usable for risk calculation and SOS: live GPS, or an explicit
+  // manual pick. Only the unconfirmed placeholder fallback is excluded.
+  bool get isConfirmedForUse => !isMockedOrFallback || isManualConfirmed;
 
   factory LocationData.defaultFallback() {
     // Phase 0 safety: this is explicitly NOT a confirmed location.
@@ -54,6 +66,7 @@ class LocationData {
     double? heading,
     DateTime? timestamp,
     bool? isMockedOrFallback,
+    bool? isManualConfirmed,
     String? label,
     String? address,
     bool? isLiveTracking,
@@ -66,6 +79,7 @@ class LocationData {
       heading: heading ?? this.heading,
       timestamp: timestamp ?? this.timestamp,
       isMockedOrFallback: isMockedOrFallback ?? this.isMockedOrFallback,
+      isManualConfirmed: isManualConfirmed ?? this.isManualConfirmed,
       label: label ?? this.label,
       address: address ?? this.address,
       isLiveTracking: isLiveTracking ?? this.isLiveTracking,
@@ -199,9 +213,13 @@ class LocationService {
       longitude: lng,
       accuracy: 5.0,
       timestamp: DateTime.now(),
+      // Still flagged as non-GPS (so the UI never says STREAMING LIVE),
+      // but explicitly confirmed by the user, so risk and SOS are
+      // allowed to run on these coordinates.
       isMockedOrFallback: true,
+      isManualConfirmed: true,
       label: label,
-      address: 'Simulated Sector Coordinates',
+      address: 'Manual location — not live GPS',
       isLiveTracking: false,
     );
     _locationController.add(_currentLocation);

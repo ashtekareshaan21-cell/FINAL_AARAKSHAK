@@ -63,7 +63,7 @@ class AssistanceList extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Cap: ${point.capacity} • ${point.contact}',
+                      '${point.capacity > 0 ? 'Cap: ${point.capacity}' : 'Capacity: Unknown'} • ${point.contact.isNotEmpty ? point.contact : '108 / 112'}',
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.white.withOpacity(0.6),

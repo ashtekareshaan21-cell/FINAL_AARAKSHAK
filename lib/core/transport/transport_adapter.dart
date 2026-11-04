@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../../shared/constants/app_brand.dart';
+import '../config/app_config.dart';
 
 class Peer {
   final String id;
@@ -65,18 +66,31 @@ abstract class TransportAdapter {
 }
 
 // 1. Internet Transport
+//
+// Phase 1: the backend URL comes from AppConfig (build-time
+// --dart-define). There is deliberately no localhost default: on a
+// phone, 127.0.0.1 is the phone itself. If no server is configured,
+// this transport reports disconnected and send() fails honestly
+// instead of pretending a delivery happened.
 class InternetTransport implements TransportAdapter {
   final String backendUrl;
-  TransportStatus _status = TransportStatus.connected;
+  final String apiToken;
+  TransportStatus _status = TransportStatus.disconnected;
 
-  InternetTransport({this.backendUrl = 'http://127.0.0.1:8000'});
+  InternetTransport({String? backendUrl, String? apiToken})
+      : backendUrl = backendUrl ?? AppConfig.serverBaseUrl,
+        apiToken = apiToken ?? AppConfig.apiToken;
+
+  bool get isConfigured => AppConfig.isServerConfigured;
 
   @override
   String get name => 'Internet REST API';
 
   @override
   Future<void> start() async {
-    _status = TransportStatus.connected;
+    // Never claim "connected" on start — that is only true after a
+    // successful send() to the configured server.
+    _status = TransportStatus.disconnected;
   }
 
   @override
@@ -103,15 +117,25 @@ class InternetTransport implements TransportAdapter {
 
   @override
   Future<TransmissionResult> send(Uint8List packet, [Peer? peer]) async {
+    if (!isConfigured) {
+      _status = TransportStatus.disconnected;
+      return const TransmissionResult(
+        success: false,
+        message: 'Server not configured: set AARAKSHAK_SERVER_URL at build time. Packet was not sent.',
+      );
+    }
     try {
       final hex = packet.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+      final headers = <String, String>{'Content-Type': 'application/json'};
+      if (apiToken.isNotEmpty) headers['Authorization'] = 'Bearer $apiToken';
       final response = await http.post(
         Uri.parse('$backendUrl/api/v1/telemetry/inject-packet'),
-        headers: {'Content-Type': 'application/json'},
+        headers: headers,
         body: '{"raw_hex": "$hex"}',
       ).timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        _status = TransportStatus.connected;
         return TransmissionResult(
           success: true,
           message: 'Delivered directly to backend server (HTTP ${response.statusCode})',
@@ -119,12 +143,14 @@ class InternetTransport implements TransportAdapter {
           ackId: 'ACK-REST-200',
         );
       } else {
+        _status = TransportStatus.error;
         return TransmissionResult(
           success: false,
           message: 'Server error HTTP ${response.statusCode}: ${response.body}',
         );
       }
     } catch (e) {
+      _status = TransportStatus.error;
       return TransmissionResult(
         success: false,
         message: 'Internet connection unavailable or backend offline: $e',

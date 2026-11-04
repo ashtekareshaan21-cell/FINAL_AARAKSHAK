@@ -8,6 +8,7 @@ import '../../shared/constants/app_brand.dart';
 import '../../core/triage/triage_engine.dart';
 import '../../core/triage/signal_extraction_service.dart';
 import '../../core/packet/packet_engine.dart';
+import '../../core/device/device_identity.dart';
 import '../../data/repositories/incident_repository.dart';
 
 class VictimScreen extends StatefulWidget {
@@ -223,8 +224,10 @@ class _VictimScreenState extends State<VictimScreen> {
     );
 
     final triage = TriageEngine.calculate(currentSignal);
-    final sourceNode = 0x12345678 + Random().nextInt(999);
-    final packetId = Random().nextInt(65000);
+    // Phase 1: stable device ID + persisted packet counter, not random.
+    // Random IDs collided on the server's UNIQUE(source_node, packet_id).
+    final sourceNode = await DeviceIdentity.getSourceNode();
+    final packetId = await DeviceIdentity.nextPacketId();
 
     final packet = EmergencyPacket(
       packetId: packetId,
@@ -308,8 +311,10 @@ class _VictimScreenState extends State<VictimScreen> {
       }
       return;
     }
-    final sourceNode = 0x12345678 + Random().nextInt(999);
-    final packetId = Random().nextInt(65000);
+    // Phase 1: stable device ID + persisted packet counter, not random.
+    // Random IDs collided on the server's UNIQUE(source_node, packet_id).
+    final sourceNode = await DeviceIdentity.getSourceNode();
+    final packetId = await DeviceIdentity.nextPacketId();
 
     // Phase 0 safety: encode a real packet instead of a hardcoded hex
     // string, and queue it — never claim DELIVERED without an ACK.
