@@ -12,7 +12,7 @@ class AlertsScreen extends StatefulWidget {
 
 class _AlertsScreenState extends State<AlertsScreen> {
   final DisasterDataService _disasterService = NasaEonetDisasterService();
-  final WeatherService _weatherService = MockableWeatherService();
+  // Phase 0: weather is intentionally not fetched here (see _fetchEvents).
 
   List<DisasterEvent> _events = [];
   WeatherSnapshot? _weatherSnapshot;
@@ -29,11 +29,13 @@ class _AlertsScreenState extends State<AlertsScreen> {
   Future<void> _fetchEvents() async {
     setState(() { _isLoading = true; });
     final list = await _disasterService.getEvents();
-    final weather = await _weatherService.getWeather(latitude: 18.52043, longitude: 73.85674);
+    // Phase 0 safety: do NOT fetch weather for hardcoded Pune
+    // coordinates. The weather card stays hidden until Alerts receives
+    // the user's real location (Phase 1).
     if (mounted) {
       setState(() {
         _events = list;
-        _weatherSnapshot = weather;
+        _weatherSnapshot = null;
         _isLoading = false;
       });
     }
