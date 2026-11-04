@@ -76,7 +76,7 @@ class _MeshLabScreenState extends State<MeshLabScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  'HACKATHON DEMO & CHAOS TEST CONTROLS',
+                  'SIMULATION ONLY — NOT REAL MESH • CHAOS TEST CONTROLS',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
