@@ -7,7 +7,6 @@ import '../assistance/assistance_model.dart';
 import '../mesh/mesh_service.dart';
 import '../sos/sos_controller.dart';
 import '../sos/sos_packet.dart';
-import '../simulation/simulation_controller.dart';
 import 'context_engine.dart';
 import 'risk_state.dart';
 
@@ -93,44 +92,38 @@ final riskStateProvider = FutureProvider<RiskState>((ref) async {
   final location = ref.watch(locationStateProvider);
   final engine = ref.watch(contextEngineProvider);
   final sosState = ref.watch(sosControllerProvider);
-  final simState = ref.watch(simulationProvider);
   final weatherAsync = ref.watch(weatherStateProvider);
 
   final String weatherSummary = weatherAsync.maybeWhen(
-    data: (w) => '${w.condition} • ${w.temperatureC.toStringAsFixed(1)}°C • Wind ${w.windKmh.toStringAsFixed(1)} km/h • Rain ${w.precipitationMm.toStringAsFixed(1)} mm',
-    orElse: () => 'Active Telemetry Monitoring',
+    data: (w) => w.stateTag == WeatherStateTag.unavailable
+        ? 'Weather unavailable'
+        : '${w.condition} • ${w.temperatureC.toStringAsFixed(1)}°C • Wind ${w.windKmh.toStringAsFixed(1)} km/h • Rain ${w.precipitationMm.toStringAsFixed(1)} mm',
+    orElse: () => 'Weather unavailable',
   );
 
-  // Simulation Risk Level override check
-  if (simState.isSimulationActive && simState.overrideRiskLevel != null) {
+  // Phase 0 safety: simulation risk overrides are removed from the
+  // production Home flow. Simulation lives only in Mesh Lab.
+  // Also, an unconfirmed (mocked/fallback) location must not produce
+  // a risk score for a place the user is not actually in — unless an
+  // SOS is active, in which case the SOS state itself is the risk.
+  final bool activeSos = sosState != null;
+  if (location.isMockedOrFallback && !activeSos) {
     return RiskState(
-      level: simState.overrideRiskLevel!,
-      score: simState.overrideRiskLevel == RiskLevel.safe
-          ? 15.0
-          : simState.overrideRiskLevel == RiskLevel.warning
-              ? 45.0
-              : simState.overrideRiskLevel == RiskLevel.danger
-                  ? 72.0
-                  : 100.0,
-      nearestHazardKm: simState.overrideRiskLevel == RiskLevel.safe ? 18.0 : 3.2,
-      primaryHazard: 'SIMULATED RISK OVERRIDE (${simState.overrideRiskLevel!.name.toUpperCase()})',
-      confidence: 0.95,
-      activeSos: simState.overrideRiskLevel == RiskLevel.sos,
+      level: RiskLevel.safe,
+      score: 0.0,
+      nearestHazardKm: 999.0,
+      primaryHazard: 'Location not confirmed — risk cannot be calculated',
+      confidence: 0.0,
+      activeSos: false,
       weatherSummary: weatherSummary,
       lastUpdated: DateTime.now(),
     );
   }
 
-  final bool isOnline = simState.isSimulationActive
-      ? simState.networkStatus == NetworkStatus.online
-      : true;
-
-  final bool activeSos = sosState != null;
-
   return await engine.evaluateContext(
     userLat: location.latitude,
     userLng: location.longitude,
-    isOnline: isOnline,
+    isOnline: true,
     activeSos: activeSos,
     weatherSummary: weatherSummary,
   );
@@ -149,15 +142,12 @@ final sortedAssistanceProvider = FutureProvider<List<AssistancePoint>>((ref) asy
 final activeHazardsProvider = FutureProvider<List<Hazard>>((ref) async {
   final location = ref.watch(locationStateProvider);
   final repo = ref.watch(hazardRepositoryProvider);
-  final simState = ref.watch(simulationProvider);
 
-  final isOnline = simState.isSimulationActive
-      ? simState.networkStatus == NetworkStatus.online
-      : true;
-
+  // Phase 0 safety: simulation must not suppress the live hazard API
+  // in production. Simulated hazards stay in Mesh Lab only.
   return await repo.getActiveHazards(
     userLat: location.latitude,
     userLng: location.longitude,
-    isOnline: isOnline,
+    isOnline: true,
   );
 });
