@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:resqmesh_ai/core/config/app_config.dart';
 import 'package:resqmesh_ai/core/packet/packet_engine.dart';
 import 'package:resqmesh_ai/core/sync/eoc_websocket_client.dart';
 import 'package:resqmesh_ai/core/sync/sync_service.dart';
@@ -13,22 +12,19 @@ import 'package:resqmesh_ai/features/sos/sos_packet.dart';
 import 'package:resqmesh_ai/shared/constants/app_brand.dart';
 
 class MockTransport implements TransportAdapter {
-  final String _name;
+  @override
+  final String name;
   TransportStatus _status;
   final bool shouldSucceed;
   final String ackId;
   int sendCallCount = 0;
 
   MockTransport({
-    String name = 'MockTransport',
+    this.name = 'MockTransport',
     TransportStatus initialStatus = TransportStatus.disconnected,
     this.shouldSucceed = true,
     this.ackId = 'ACK-MOCK-201',
-  })  : _name = name,
-        _status = initialStatus;
-
-  @override
-  String get name => _name;
+  })  : _status = initialStatus;
 
   @override
   TransportStatus getStatus() => _status;
