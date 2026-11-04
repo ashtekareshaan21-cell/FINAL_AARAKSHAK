@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../shared/constants/app_brand.dart';
 import '../../core/disaster/disaster_service.dart';
+import '../../core/disaster/live_disaster_service.dart';
 import '../../core/weather/weather_service.dart';
 
 class AlertsScreen extends StatefulWidget {
@@ -11,7 +12,8 @@ class AlertsScreen extends StatefulWidget {
 }
 
 class _AlertsScreenState extends State<AlertsScreen> {
-  final DisasterDataService _disasterService = NasaEonetDisasterService();
+  // Phase 1: EONET + GDACS + USGS, not EONET alone.
+  final DisasterDataService _disasterService = CombinedDisasterService();
   // Phase 0: weather is intentionally not fetched here (see _fetchEvents).
 
   List<DisasterEvent> _events = [];

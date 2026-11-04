@@ -3,12 +3,30 @@ import 'package:sqflite/sqflite.dart';
 import '../../data/database/database_helper.dart';
 import 'assistance_model.dart';
 import 'assistance_sorter.dart';
+import 'overpass_service.dart';
 
 class AssistanceRepository {
   final DatabaseHelper _dbHelper;
+  final OverpassService _overpass;
 
-  AssistanceRepository({DatabaseHelper? dbHelper})
-      : _dbHelper = dbHelper ?? DatabaseHelper.instance;
+  AssistanceRepository({DatabaseHelper? dbHelper, OverpassService? overpass})
+      : _dbHelper = dbHelper ?? DatabaseHelper.instance,
+        _overpass = overpass ?? OverpassService();
+
+  // Phase 1: fetch verified OSM points for the user's real location,
+  // store them, and return them sorted. Call this on a manual refresh
+  // or when the location changes significantly — not on every build,
+  // because Overpass is a shared public service with rate limits.
+  Future<List<AssistancePoint>> refreshFromOverpass({
+    required double userLat,
+    required double userLng,
+  }) async {
+    final points = await _overpass.fetchNearby(lat: userLat, lng: userLng);
+    for (final point in points) {
+      await _savePoint(point);
+    }
+    return getSortedAssistancePoints(userLat: userLat, userLng: userLng);
+  }
 
   Future<List<AssistancePoint>> getSortedAssistancePoints({
     required double userLat,

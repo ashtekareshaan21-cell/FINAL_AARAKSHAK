@@ -93,7 +93,7 @@ class DisasterRadarScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        isDemoLocation ? 'TEST PRESET' : 'GPS LIVE',
+                        location.isManualConfirmed ? 'MANUAL' : isDemoLocation ? 'TEST PRESET' : 'GPS LIVE',
                         style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.black),
                       ),
                     ),

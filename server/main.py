@@ -1,11 +1,31 @@
+import os
 import struct
 import json
 import sqlite3
 import time
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+# Phase 1 — auth + CORS are environment-driven, never open by default
+# in production. Set AARAKSHAK_API_TOKEN on the host before deploying;
+# the Flutter app sends it as "Authorization: Bearer <token>" (see
+# lib/core/config/app_config.dart). If no token is set, the server
+# still accepts requests (local dev) but logs a warning on every
+# inject — deploy checklists must treat an unset token as a blocker.
+API_TOKEN = os.environ.get("AARAKSHAK_API_TOKEN", "")
+CORS_ORIGINS = [o.strip() for o in os.environ.get("AARAKSHAK_CORS_ORIGINS", "").split(",") if o.strip()]
+
+def require_token(authorization: Optional[str] = Header(default=None)):
+    if not API_TOKEN:
+        print("WARNING: AARAKSHAK_API_TOKEN is not set — packet ingest is unauthenticated. Set it before production use.")
+        return
+    if authorization != f"Bearer {API_TOKEN}":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": {"code": "UNAUTHORIZED", "message": "Valid Bearer token required"}},
+        )
 
 app = FastAPI(
     title="Aarakshak Command Center API",
@@ -15,7 +35,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -102,7 +122,8 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 @app.post("/api/v1/telemetry/inject-packet", response_model=PacketResponse, status_code=201)
-async def inject_packet(req: PacketInjectRequest):
+async def inject_packet(req: PacketInjectRequest, authorization: Optional[str] = Header(default=None)):
+    require_token(authorization)
     hex_str = req.raw_hex.replace(" ", "").replace("\n", "")
     if len(hex_str) != 96:
         raise HTTPException(

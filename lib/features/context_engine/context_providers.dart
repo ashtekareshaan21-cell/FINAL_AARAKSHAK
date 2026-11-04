@@ -11,9 +11,22 @@ import 'context_engine.dart';
 import 'risk_state.dart';
 
 import '../../core/weather/weather_service.dart';
+import '../../core/connectivity/connectivity_service.dart';
 
 final weatherServiceProvider = Provider<WeatherService>((ref) {
   return MockableWeatherService();
+});
+
+// Phase 1: real connectivity (connectivity_plus), not "simulation off".
+// The Home badge uses this; simulation only suppresses the live badge
+// wording, it never creates an online state by itself.
+final connectivityServiceProvider = Provider<ConnectivityService>((ref) {
+  return ConnectivityService();
+});
+
+final isOnlineProvider = StreamProvider<bool>((ref) {
+  final service = ref.watch(connectivityServiceProvider);
+  return service.onConnectivityChanged;
 });
 
 final weatherStateProvider = FutureProvider<WeatherSnapshot>((ref) async {
@@ -107,7 +120,9 @@ final riskStateProvider = FutureProvider<RiskState>((ref) async {
   // a risk score for a place the user is not actually in — unless an
   // SOS is active, in which case the SOS state itself is the risk.
   final bool activeSos = sosState != null;
-  if (location.isMockedOrFallback && !activeSos) {
+  // Manual-confirmed locations are usable for risk: only the
+  // unconfirmed placeholder fallback is excluded.
+  if (!location.isConfirmedForUse && !activeSos) {
     return RiskState(
       level: RiskLevel.safe,
       score: 0.0,
