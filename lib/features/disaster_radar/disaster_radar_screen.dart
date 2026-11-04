@@ -52,7 +52,7 @@ class DisasterRadarScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.my_location_rounded, color: Colors.cyanAccent),
-            tooltip: 'Change Test Sector Location',
+            tooltip: 'Change Location',
             onPressed: () => LocationSelectorModal.show(context),
           ),
         ],
