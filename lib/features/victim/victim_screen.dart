@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:battery_plus/battery_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../shared/constants/app_brand.dart';
 import '../../core/triage/triage_engine.dart';
 import '../../core/triage/signal_extraction_service.dart';
@@ -36,31 +38,36 @@ class _VictimScreenState extends State<VictimScreen> {
   TriageResult? _triageResult;
   bool _isSending = false;
 
-  // Form Fields
+  // Form Fields — Phase 0 safety: no worst-case defaults. The user must
+  // fill in what is actually happening; nothing is pre-assumed.
   String _selectedCategory = 'Flood';
-  int _casualties = 4;
-  String _medicalStatus = 'Unconscious';
-  bool _personTrapped = true;
-  bool _waterRising = true;
+  int _casualties = 1;
+  String _medicalStatus = 'Unknown';
+  bool _personTrapped = false;
+  bool _waterRising = false;
   bool _firePresent = false;
   bool _structuralInstability = false;
-  bool _requiresEvacuation = true;
+  bool _requiresEvacuation = false;
 
   // Location Fields (Editable & Feedable)
+  // Initial coordinates are NOT a confirmed location. SOS is blocked
+  // until _locationConfirmed becomes true via real GPS or an explicit
+  // manual selection (see _loadRealBatteryAndGps and preset/manual taps).
   double _latitude = 18.52043;
   double _longitude = 73.85674;
-  String _selectedLocationName = '📍 [TEST LOCATION] Sector 4 Demo Station';
-  double _gpsAccuracy = 8.0;
-  final int _batteryLevel = 85;
+  String _selectedLocationName = 'Location not confirmed — GPS / manual required';
+  double _gpsAccuracy = 0.0;
+  int _batteryLevel = 255; // 255 = unknown in the packet format
+  bool _locationConfirmed = false;
 
   final List<LocationPreset> _locationPresets = [
-    LocationPreset('📍 [TEST LOCATION] Swargate Sector', 18.52043, 73.85674),
-    LocationPreset('📍 [TEST LOCATION] Kothrud Sector', 18.5074, 73.8077),
-    LocationPreset('📍 [TEST LOCATION] Shivajinagar Landmark', 18.5314, 73.8446),
-    LocationPreset('📍 [TEST LOCATION] Hadapsar Station', 18.5089, 73.9259),
-    LocationPreset('📍 [TEST LOCATION] Marine Drive', 18.9440, 72.8238),
-    LocationPreset('📍 [TEST LOCATION] Connaught Place', 28.6315, 77.2167),
-    LocationPreset('📍 [TEST LOCATION] MG Road Station', 12.9756, 77.6066),
+    LocationPreset('📍 Swargate Sector (manual)', 18.52043, 73.85674),
+    LocationPreset('📍 Kothrud Sector (manual)', 18.5074, 73.8077),
+    LocationPreset('📍 Shivajinagar Landmark (manual)', 18.5314, 73.8446),
+    LocationPreset('📍 Hadapsar Station (manual)', 18.5089, 73.9259),
+    LocationPreset('📍 Marine Drive (manual)', 18.9440, 72.8238),
+    LocationPreset('📍 Connaught Place (manual)', 28.6315, 77.2167),
+    LocationPreset('📍 MG Road Station (manual)', 12.9756, 77.6066),
   ];
 
   IncidentRecord? _activeSignal;
@@ -78,9 +85,10 @@ class _VictimScreenState extends State<VictimScreen> {
   @override
   void initState() {
     super.initState();
-    _descriptionController.text = 'Flood water is rising quickly. 4 people trapped inside. 1 person unconscious.';
+    _descriptionController.text = '';
     _loadIncidents();
     _checkConnectivity();
+    _loadRealBatteryAndGps();
 
     _connectivitySub = _connectivity.onConnectivityChanged.listen((results) {
       if (mounted) {
@@ -100,6 +108,46 @@ class _VictimScreenState extends State<VictimScreen> {
         });
       }
     });
+  }
+
+  /// Phase 0 safety: replace the fixed battery (85) and fixed GPS
+  /// accuracy with real values. If GPS fails, the location stays
+  /// unconfirmed and SOS is blocked until the user picks a manual
+  /// location explicitly.
+  Future<void> _loadRealBatteryAndGps() async {
+    try {
+      final level = await Battery().batteryLevel;
+      if (mounted) {
+        setState(() {
+          _batteryLevel = level.clamp(0, 100);
+        });
+      }
+    } catch (_) {
+      // Battery unknown (255) is kept; never claim a fixed level.
+    }
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 5),
+      );
+      if (mounted) {
+        setState(() {
+          _latitude = position.latitude;
+          _longitude = position.longitude;
+          _gpsAccuracy = position.accuracy;
+          _selectedLocationName = 'Live GPS';
+          _locationConfirmed = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _selectedLocationName =
+              'GPS unavailable — pick a manual location below';
+          _locationConfirmed = false;
+        });
+      }
+    }
   }
 
   Future<void> _checkConnectivity() async {
@@ -134,6 +182,25 @@ class _VictimScreenState extends State<VictimScreen> {
   Future<void> _triggerInstantSOS({bool isOneTap = false}) async {
     setState(() { _isSending = true; });
 
+    // Phase 0 safety: never send an SOS from an unconfirmed location
+    // (the old Pune fallback). The user must have live GPS or an
+    // explicit manual location first.
+    if (!_locationConfirmed) {
+      if (mounted) {
+        setState(() { _isSending = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Location not confirmed — GPS on karo ya manual location chuno, phir SOS bhejo.',
+            ),
+            backgroundColor: Colors.amber,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
     final currentSignal = EmergencySignal(
       category: _selectedCategory,
       casualties: _casualties,
@@ -159,8 +226,13 @@ class _VictimScreenState extends State<VictimScreen> {
       latitude: _latitude,
       longitude: _longitude,
       battery: _batteryLevel,
-      adults: max(1, _casualties - 1),
-      children: _casualties > 1 ? 1 : 0,
+      // Phase 0 safety: do not invent an adult/child split. The total
+      // headcount is _casualties; the child split is unknown (0) until
+      // the form asks for it explicitly.
+      adults: _casualties.clamp(0, 15),
+      children: 0,
+      // Note: the 48-byte packet format truncates this to 23 bytes in
+      // PacketEngine; the full description stays in the local incident.
       payloadText: _descriptionController.text.substring(0, min(23, _descriptionController.text.length)),
     );
 
@@ -184,27 +256,16 @@ class _VictimScreenState extends State<VictimScreen> {
       packetHex: packetHex,
       ttl: 15,
       hopCount: 0,
-      status: 'LOCAL',
+      // Phase 0 safety: QUEUED means saved locally and queued only.
+      // It is NOT delivered — delivery needs a real server/mesh ACK
+      // (Phase 2). No timer may advance this to DELIVERED.
+      status: 'QUEUED',
       createdAt: DateTime.now(),
       clientPriority: triage.priorityLabel,
       serverPriority: triage.priorityLabel,
-      trustScore: 94,
     );
 
     await _repository.saveIncident(incident);
-
-    // Simulate transport delivery progression
-    Future.delayed(const Duration(seconds: 1), () async {
-      await _repository.updateStatus(incident.id, 'QUEUED');
-    });
-
-    Future.delayed(const Duration(seconds: 3), () async {
-      await _repository.updateStatus(incident.id, 'RELAYING');
-    });
-
-    Future.delayed(const Duration(seconds: 5), () async {
-      await _repository.updateStatus(incident.id, 'DELIVERED');
-    });
 
     if (mounted) {
       setState(() {
@@ -214,7 +275,9 @@ class _VictimScreenState extends State<VictimScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('🆘 Emergency signal created for $_selectedLocationName! Broadcasted to network.'),
+          content: Text(
+            '🆘 Emergency signal saved locally and queued for $_selectedLocationName. Not yet delivered — delivery confirmation needs server/mesh (Phase 2).',
+          ),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ),
@@ -223,8 +286,40 @@ class _VictimScreenState extends State<VictimScreen> {
   }
 
   Future<void> _sendImSafe() async {
+    if (!_locationConfirmed) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Location not confirmed — GPS on karo ya manual location chuno, phir check-in karo.',
+            ),
+            backgroundColor: Colors.amber,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
     final sourceNode = 0x12345678 + Random().nextInt(999);
     final packetId = Random().nextInt(65000);
+
+    // Phase 0 safety: encode a real packet instead of a hardcoded hex
+    // string, and queue it — never claim DELIVERED without an ACK.
+    final safePacket = EmergencyPacket(
+      packetId: packetId,
+      sourceNode: sourceNode,
+      timestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      priority: TriagePriority.p3Safe,
+      latitude: _latitude,
+      longitude: _longitude,
+      battery: _batteryLevel,
+      adults: 1,
+      children: 0,
+      payloadText: 'I AM SAFE',
+    );
+    final safeHex = PacketEngine.packetToHex(
+      PacketEngine.encodePacket(safePacket),
+    );
 
     final incident = IncidentRecord(
       id: 'SAFE-${sourceNode.toRadixString(16).toUpperCase()}',
@@ -235,19 +330,18 @@ class _VictimScreenState extends State<VictimScreen> {
       severityScore: 10,
       latitude: _latitude,
       longitude: _longitude,
-      gpsAccuracy: 5.0,
+      gpsAccuracy: _gpsAccuracy,
       battery: _batteryLevel,
       headcount: 1,
       medicalStatus: 'Stable',
       description: "User checked in: I AM SAFE at $_selectedLocationName.",
-      packetHex: '52535131000100000000000000000000',
+      packetHex: safeHex,
       ttl: 15,
       hopCount: 0,
-      status: 'DELIVERED',
+      status: 'QUEUED',
       createdAt: DateTime.now(),
       clientPriority: 'P3 — SAFE',
       serverPriority: 'P3 — SAFE',
-      trustScore: 98,
     );
 
     await _repository.saveIncident(incident);
@@ -255,7 +349,9 @@ class _VictimScreenState extends State<VictimScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✅ Check-in sent: "I AM SAFE at $_selectedLocationName".'),
+          content: Text(
+            '✅ Check-in saved locally and queued: "I AM SAFE at $_selectedLocationName". Not yet delivered.',
+          ),
           backgroundColor: emeraldColor,
           behavior: SnackBarBehavior.floating,
         ),
@@ -808,47 +904,16 @@ class _VictimScreenState extends State<VictimScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
-                  Text('📍 Manual Location Feed & Simulator', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                  Text('📍 Manual Location Feed', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
                   Icon(Icons.location_on_rounded, color: Colors.cyanAccent, size: 22),
                 ],
               ),
               const SizedBox(height: 4),
-              Text('Feed custom coordinates or pick a landmark to test SOS at any location:', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+              Text('Pick a landmark or enter coordinates manually. This is a manual location, not live GPS:', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
               const SizedBox(height: 12),
-
-              // 🎲 Generate Random Test Location Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    final random = Random();
-                    final rLat = 18.4000 + random.nextDouble() * 0.2500;
-                    final rLng = 73.7000 + random.nextDouble() * 0.2500;
-                    final randomName = '🎲 Test Sector #${random.nextInt(900) + 100} (Demo Region)';
-
-                    setState(() {
-                      _latitude = rLat;
-                      _longitude = rLng;
-                      _selectedLocationName = randomName;
-                    });
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('🎲 Random Location Generated: $randomName (${rLat.toStringAsFixed(4)}, ${rLng.toStringAsFixed(4)})'),
-                        backgroundColor: Colors.cyan,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.casino_rounded, color: Colors.black, size: 18),
-                  label: const Text('GENERATE RANDOM TEST LOCATION 🎲', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 11)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.cyanAccent,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
+              // Phase 0 safety: the random test-location generator is
+              // removed from this screen. Random sectors must never
+              // become an SOS location.
 
               const SizedBox(height: 14),
               const Text('Preset Regional Landmarks:', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
@@ -871,6 +936,7 @@ class _VictimScreenState extends State<VictimScreen> {
                       _latitude = preset.lat;
                       _longitude = preset.lng;
                       _selectedLocationName = preset.name;
+                      _locationConfirmed = true;
                     });
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -925,6 +991,7 @@ class _VictimScreenState extends State<VictimScreen> {
                       _selectedLocationName = nameCtrl.text.isNotEmpty
                           ? nameCtrl.text
                           : 'Custom Position (${newLat.toStringAsFixed(4)}, ${newLng.toStringAsFixed(4)})';
+                      _locationConfirmed = true;
                     });
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
