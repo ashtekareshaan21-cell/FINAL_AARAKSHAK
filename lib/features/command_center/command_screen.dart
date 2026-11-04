@@ -617,9 +617,12 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
 
 
   void _openDispatchModal(IncidentRecord incident) {
+    // Phase 0 safety: no prefilled dispatch claim. The unit list below
+    // is operator-entered, not a verified unit registry, and ETA is
+    // unknown (0) until the operator enters it.
     String selectedUnit = 'NDRF Rescue Unit 04';
-    int eta = 18;
-    TextEditingController notesCtrl = TextEditingController(text: 'Remain on upper floor. Boat squad en route.');
+    int eta = 0;
+    TextEditingController notesCtrl = TextEditingController(text: '');
 
     showDialog(
       context: context,
@@ -657,7 +660,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
               Navigator.pop(ctx);
               await _repository.assignResponder(incident.id, selectedUnit, eta, notes: notesCtrl.text);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('🟢 Rescue Team "$selectedUnit" assigned! Closed-loop update sent to victim phone.')),
+                SnackBar(content: Text('🟢 Rescue Team "$selectedUnit" assigned locally. Victim notification needs server/mesh (Phase 2).')),
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: emeraldColor),
