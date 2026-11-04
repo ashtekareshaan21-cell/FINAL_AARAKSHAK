@@ -3,6 +3,7 @@ enum SosStatus {
   queued,
   relayed,
   receivedByResponder,
+  cancelled,
 }
 
 class SosPacket {
@@ -40,6 +41,8 @@ class SosPacket {
         return 'RELAYED VIA MESH';
       case SosStatus.receivedByResponder:
         return 'RECEIVED BY RESPONDER';
+      case SosStatus.cancelled:
+        return 'CANCELLED';
     }
   }
 
