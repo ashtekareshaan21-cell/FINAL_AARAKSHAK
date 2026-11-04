@@ -49,13 +49,16 @@ class SosController {
     _sosStreamController.add(_activeSos);
     await _saveSosPacket(packet);
 
-    // Transition to QUEUED status
-    await Future.delayed(const Duration(milliseconds: 300));
+    // Phase 0 safety: the SOS stops at QUEUED. It must NOT advance to
+    // RELAYED on a timer — that status is reserved for a real transport
+    // confirmation in Phase 2 (server / mesh ACK).
     _activeSos = _activeSos?.copyWith(status: SosStatus.queued);
     _sosStreamController.add(_activeSos);
     await _saveSosPacket(_activeSos!);
 
-    // Package into MeshPacket with CRITICAL priority
+    // Package into MeshPacket with CRITICAL priority and place it in the
+    // local Store & Forward outbox. This is local queuing only, not a
+    // delivery confirmation.
     final meshPacket = MeshPacket(
       id: sosId,
       type: PacketType.sos,
@@ -69,19 +72,14 @@ class SosController {
       payload: '$emergencyType | Note: $medicalNote',
     );
 
-    // Route packet into Store & Forward Mesh outbox
     await _meshService.sendPacket(meshPacket, battery: batteryLevel);
-
-    // Transition to RELAYED status
-    await Future.delayed(const Duration(milliseconds: 600));
-    _activeSos = _activeSos?.copyWith(status: SosStatus.relayed);
-    _sosStreamController.add(_activeSos);
-    await _saveSosPacket(_activeSos!);
 
     return _activeSos!;
   }
 
-  /// Simulates/processes incoming ACK from an EOC responder node
+  /// Processes an incoming ACK from an EOC responder node.
+  /// Phase 0 safety: call this ONLY with a real ACK (Phase 2 server /
+  /// mesh confirmation). There is no simulated-ACK caller left in the app.
   Future<void> receiveResponderAck(String sosId, String responderMsg) async {
     if (_activeSos != null && _activeSos!.id == sosId) {
       _activeSos = _activeSos!.copyWith(
@@ -94,8 +92,14 @@ class SosController {
     }
   }
 
-  /// Cancels/resolves active SOS
+  /// Cancels/resolves active SOS. The cancelled packet is persisted as
+  /// CANCELLED so it does not linger as an active SOS in the local DB.
   Future<void> cancelSos() async {
+    if (_activeSos != null) {
+      await _saveSosPacket(
+        _activeSos!.copyWith(status: SosStatus.cancelled),
+      );
+    }
     _activeSos = null;
     _sosStreamController.add(null);
   }
