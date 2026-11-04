@@ -157,7 +157,7 @@ class _LocationSelectorModalState extends ConsumerState<LocationSelectorModal> {
             return Container(
               margin: const EdgeInsets.only(bottom: 6),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.cyan.withOpacity(0.2) : const Color(0xFF1E293B),
+                color: isSelected ? Colors.cyan.withValues(alpha: 0.2) : const Color(0xFF1E293B),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isSelected ? Colors.cyanAccent : Colors.white10,

@@ -134,7 +134,7 @@ class HomeScreen extends ConsumerWidget {
                       sortedAssistanceAsync.when(
                         data: (points) => AssistanceList(points: points),
                         loading: () => const Center(child: CircularProgressIndicator.adaptive()),
-                        error: (_, __) => const Text('Unable to load assistance points.', style: TextStyle(color: Colors.redAccent)),
+                        error: (_, _) => const Text('Unable to load assistance points.', style: TextStyle(color: Colors.redAccent)),
                       ),
 
                       const SizedBox(height: 20),
@@ -145,7 +145,7 @@ class HomeScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E293B),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.08)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                         ),
                         child: Row(
                           children: [
@@ -214,8 +214,8 @@ class HomeScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: palette.backgroundColor.withOpacity(0.9),
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.08))),
+        color: palette.backgroundColor.withValues(alpha: 0.9),
+        border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
       ),
       child: Column(
         children: [
@@ -243,9 +243,9 @@ class HomeScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: netColor.withOpacity(0.15),
+                    color: netColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: netColor.withOpacity(0.5)),
+                    border: Border.all(color: netColor.withValues(alpha: 0.5)),
                   ),
                   child: Text(
                     netStatusLabel,
@@ -267,7 +267,7 @@ class HomeScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: palette.statusBadgeColor.withOpacity(0.3),
+                    color: palette.statusBadgeColor.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: palette.accentColor, width: 1),
                   ),
@@ -311,10 +311,10 @@ class HomeScreen extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: isDemoLocation ? Colors.orange.withOpacity(0.15) : const Color(0xFF10B981).withOpacity(0.15),
+                color: isDemoLocation ? Colors.orange.withValues(alpha: 0.15) : const Color(0xFF10B981).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: isDemoLocation ? Colors.orangeAccent.withOpacity(0.5) : const Color(0xFF10B981).withOpacity(0.5),
+                  color: isDemoLocation ? Colors.orangeAccent.withValues(alpha: 0.5) : const Color(0xFF10B981).withValues(alpha: 0.5),
                 ),
               ),
               child: Column(
