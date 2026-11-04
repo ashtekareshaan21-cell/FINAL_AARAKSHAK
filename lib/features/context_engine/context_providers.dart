@@ -12,6 +12,10 @@ import 'risk_state.dart';
 
 import '../../core/weather/weather_service.dart';
 import '../../core/connectivity/connectivity_service.dart';
+import '../../core/sync/sync_service.dart';
+import '../../core/sync/eoc_websocket_client.dart';
+import '../../core/transport/transport_adapter.dart';
+import '../../data/repositories/incident_repository.dart';
 
 final weatherServiceProvider = Provider<WeatherService>((ref) {
   return MockableWeatherService();
@@ -39,6 +43,29 @@ final hazardRepositoryProvider = Provider<HazardRepository>((ref) {
   return HazardRepository();
 });
 
+final incidentRepositoryProvider = Provider<IncidentRepository>((ref) {
+  return IncidentRepository();
+});
+
+final internetTransportProvider = Provider<InternetTransport>((ref) {
+  return InternetTransport();
+});
+
+final syncServiceProvider = Provider<SyncService>((ref) {
+  final repository = ref.watch(incidentRepositoryProvider);
+  final transport = ref.watch(internetTransportProvider);
+  return SyncService(
+    repository: repository,
+    transports: [transport],
+  );
+});
+
+final eocWsClientProvider = Provider<EocWebSocketClient>((ref) {
+  final client = EocWebSocketClient();
+  ref.onDispose(() => client.dispose());
+  return client;
+});
+
 final meshServiceProvider = Provider<MeshService>((ref) {
   final service = MeshService();
   ref.onDispose(() => service.dispose());
@@ -47,7 +74,18 @@ final meshServiceProvider = Provider<MeshService>((ref) {
 
 final sosControllerProvider = StateNotifierProvider<SosNotifier, SosPacket?>((ref) {
   final meshService = ref.watch(meshServiceProvider);
-  return SosNotifier(SosController(meshService: meshService));
+  final incidentRepository = ref.watch(incidentRepositoryProvider);
+  final syncService = ref.watch(syncServiceProvider);
+  final wsClient = ref.watch(eocWsClientProvider);
+
+  final controller = SosController(
+    meshService: meshService,
+    incidentRepository: incidentRepository,
+    syncService: syncService,
+    wsClient: wsClient,
+  );
+  ref.onDispose(() => controller.dispose());
+  return SosNotifier(controller);
 });
 
 class SosNotifier extends StateNotifier<SosPacket?> {

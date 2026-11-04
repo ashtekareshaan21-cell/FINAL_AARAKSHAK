@@ -203,10 +203,37 @@ class IncidentRepository {
   }
 
   Future<List<IncidentRecord>> getQueuedIncidents() async {
+    if (!kIsWeb) {
+      try {
+        final db = await DatabaseHelper.instance.database;
+        final rows = await db.query(
+          'incidents',
+          where: "status IN ('LOCAL', 'QUEUED', 'PENDING', 'SENDING', 'RELAYING')",
+          orderBy: 'created_at ASC',
+        );
+        final list = rows.map((r) => IncidentRecord.fromMap(r)).toList();
+        for (final item in list) {
+          final idx = _webInMemoryQueue.indexWhere((i) => i.id == item.id);
+          if (idx >= 0) {
+            _webInMemoryQueue[idx] = item;
+          } else {
+            _webInMemoryQueue.add(item);
+          }
+        }
+        return list;
+      } catch (_) {}
+    }
     return _webInMemoryQueue.where((i) => ['LOCAL', 'QUEUED', 'PENDING', 'SENDING', 'RELAYING'].contains(i.status)).toList();
   }
 
   Future<List<IncidentRecord>> getAllIncidents() async {
+    if (!kIsWeb) {
+      try {
+        final db = await DatabaseHelper.instance.database;
+        final rows = await db.query('incidents', orderBy: 'created_at DESC');
+        return rows.map((r) => IncidentRecord.fromMap(r)).toList();
+      } catch (_) {}
+    }
     return List.from(_webInMemoryQueue);
   }
 
@@ -215,7 +242,9 @@ class IncidentRepository {
     if (idx >= 0) {
       _webInMemoryQueue[idx] = _webInMemoryQueue[idx].copyWith(
         status: status,
-        receivedAt: status == 'DELIVERED' || status == 'ACKNOWLEDGED' ? DateTime.now() : _webInMemoryQueue[idx].receivedAt,
+        receivedAt: status == 'DELIVERED' || status == 'ACKNOWLEDGED' || status == 'RELAYED'
+            ? DateTime.now()
+            : _webInMemoryQueue[idx].receivedAt,
       );
     }
     if (!kIsWeb) {
