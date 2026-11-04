@@ -2,6 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/weather_data.dart';
 
+// Phase 0 note: this pipeline is NOT used by the production UI (the UI
+// uses core/weather/weather_service.dart). Its fallbackDemo path is
+// therefore not reachable from Home, but it must be deleted together
+// with the duplicate-pipeline cleanup — do not wire it back in.
 class WeatherService {
   WeatherData? _cachedWeatherData;
 

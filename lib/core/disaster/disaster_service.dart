@@ -56,19 +56,8 @@ class NasaEonetDisasterService implements DisasterDataService {
         final List eventsList = data['events'] ?? [];
         final results = <DisasterEvent>[];
 
-        // Seed with primary local disaster warning first for regional context
-        results.add(DisasterEvent(
-          id: 'LOC-2026-FLOOD-01',
-          title: 'Regional Monsoon & Inundation Risk (Placeholder Feed)',
-          category: 'Severe Weather / Flood',
-          latitude: 18.5204,
-          longitude: 73.8567,
-          timestamp: DateTime.now().subtract(const Duration(minutes: 12)),
-          source: 'PLACEHOLDER — Official IMD Feed Not Connected',
-          severity: 'CRITICAL',
-          freshnessTag: 'PLACEHOLDER',
-        ));
-
+        // Phase 0 safety: no placeholder disaster is injected above the
+        // live EONET events. Only real API events are returned.
         for (var item in eventsList) {
           final categories = item['categories'] as List;
           final categoryName = categories.isNotEmpty ? categories[0]['title'] ?? 'Natural Hazard' : 'Natural Hazard';
@@ -102,30 +91,9 @@ class NasaEonetDisasterService implements DisasterDataService {
       // Offline fallback
     }
 
-    // Return localized regional disaster context fallback
-    return [
-      DisasterEvent(
-        id: 'LOC-2026-FLOOD-01',
-        title: 'Regional Monsoon Alert (Placeholder Feed)',
-        category: 'Floods',
-        latitude: 18.5204,
-        longitude: 73.8567,
-        timestamp: DateTime.now().subtract(const Duration(minutes: 25)),
-        source: 'Cached Regional Warning System',
-        severity: 'CRITICAL',
-        freshnessTag: 'CACHED',
-      ),
-      DisasterEvent(
-        id: 'LOC-2026-LANDSLIDE-02',
-        title: 'Western Ghats Debris Flow Warning',
-        category: 'Landslides',
-        latitude: 18.4500,
-        longitude: 73.7800,
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-        source: 'Cached Geological Survey',
-        severity: 'HIGH',
-        freshnessTag: 'CACHED',
-      ),
-    ];
+    // Phase 0 safety: no invented fallback disasters. If the live feed
+    // fails, return the last cached live events if any, otherwise nothing.
+    // Callers must render an empty / unavailable state, not a fake alert.
+    return _cachedEvents;
   }
 }

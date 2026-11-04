@@ -76,17 +76,19 @@ class MockableWeatherService implements WeatherService {
       );
     }
 
-    // Default offline/demo fallback snapshot (Calm, normal weather)
+    // Phase 0 safety: no invented offline weather. Zeroes here are
+    // placeholders for a snapshot the UI must render as UNAVAILABLE
+    // (see WeatherSummaryCard), never as a calm-weather reading.
     return WeatherSnapshot(
-      temperatureC: 26.5,
-      feelsLikeC: 27.2,
+      temperatureC: 0.0,
+      feelsLikeC: 0.0,
       precipitationMm: 0.0,
-      humidity: 58,
-      windKmh: 10.5,
-      condition: 'Partly Cloudy',
-      stateTag: WeatherStateTag.cached,
-      observedAt: DateTime.now().subtract(const Duration(minutes: 15)),
-      provider: 'Offline Weather Telemetry',
+      humidity: 0,
+      windKmh: 0.0,
+      condition: 'Unavailable',
+      stateTag: WeatherStateTag.unavailable,
+      observedAt: DateTime.now(),
+      provider: 'Unavailable — no live or cached data',
     );
 
   }

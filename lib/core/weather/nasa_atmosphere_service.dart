@@ -128,7 +128,10 @@ class NasaAtmosphereService {
   }
 
   /// Calculates localized atmospheric wind & cloud telemetry for given coordinates.
-  static Future<AtmosphericTelemetry> fetchAtmosphericTelemetry({
+  /// Returns null when live data is unavailable — callers must render an
+  /// unavailable state. Phase 0 safety: no coordinate-derived pseudo
+  /// telemetry is ever returned as if it were measured.
+  static Future<AtmosphericTelemetry?> fetchAtmosphericTelemetry({
     required double latitude,
     required double longitude,
   }) async {
@@ -159,25 +162,10 @@ class NasaAtmosphereService {
         );
       }
     } catch (_) {
-      // Fallback
+      // No live data — return null, never pseudo-telemetry.
     }
 
-    // Offline dynamic telemetry based on coordinates
-    final pseudoWind = 18.5 + ((latitude.abs() + longitude.abs()) % 15.0);
-    final pseudoBearing = (140.0 + (longitude * 3.0)) % 360.0;
-    final pseudoCloud = (55 + (latitude.toInt() * 7) % 40).clamp(10, 95);
-
-    return AtmosphericTelemetry(
-      windSpeedKmh: pseudoWind,
-      windSpeedKnots: pseudoWind * 0.539957,
-      windBearingDegrees: pseudoBearing,
-      windCardinal: _getCardinalDirection(pseudoBearing),
-      cloudCoveragePercent: pseudoCloud,
-      cloudTopAltitudeMeters: 2200.0,
-      barometricPressureHpa: 1011.4,
-      precipitationMmHr: pseudoWind > 25 ? 4.2 : 0.0,
-      observedAt: DateTime.now(),
-    );
+    return null;
   }
 
   static String _getCardinalDirection(double degrees) {
