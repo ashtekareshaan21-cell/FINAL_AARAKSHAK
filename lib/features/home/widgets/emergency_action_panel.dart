@@ -113,8 +113,8 @@ class EmergencyActionPanel extends StatelessWidget {
               isActive: activeSos!.status == SosStatus.receivedByResponder,
             ),
 
-            // Sync status feedback line (e.g. while QUEUED or attempting transmission)
-            if (activeSos!.status == SosStatus.queued || (syncStatusMessage != null && syncStatusMessage!.isNotEmpty && activeSos!.status != SosStatus.receivedByResponder)) ...[
+            // Sync status feedback line (while QUEUED attempting transmission, or once RELAYED)
+            if (activeSos!.status == SosStatus.queued) ...[
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -122,19 +122,15 @@ class EmergencyActionPanel extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: activeSos!.status == SosStatus.queued
-                        ? Colors.amber.withValues(alpha: 0.4)
-                        : Colors.white24,
+                    color: Colors.amber.withValues(alpha: 0.4),
                   ),
                 ),
                 child: Row(
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 12,
                       height: 12,
-                      child: activeSos!.status == SosStatus.queued
-                          ? const CircularProgressIndicator(strokeWidth: 1.5, color: Colors.amber)
-                          : const Icon(Icons.sync_rounded, size: 12, color: Colors.white70),
+                      child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.amber),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -142,12 +138,42 @@ class EmergencyActionPanel extends StatelessWidget {
                         syncStatusMessage?.isNotEmpty == true
                             ? syncStatusMessage!
                             : 'Waiting for server — contacting backend...',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.amber,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (activeSos!.status == SosStatus.relayed) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF065F46).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF10B981)),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Delivered to EOC server • Awaiting responder acknowledgement...',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: activeSos!.status == SosStatus.queued
-                              ? Colors.amber
-                              : Colors.white70,
+                          color: Color(0xFF10B981),
                         ),
                       ),
                     ),
