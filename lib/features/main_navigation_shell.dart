@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'home/home_screen.dart';
 import 'disaster_radar/disaster_radar_screen.dart';
 import 'command_center/command_screen.dart';
-import 'mesh_lab/mesh_lab_screen.dart';
+import 'disaster_alerts/alerts_screen.dart';
 
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
@@ -19,7 +19,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     HomeScreen(),
     DisasterRadarScreen(),
     CommandScreen(),
-    MeshLabScreen(),
+    AlertsScreen(),
   ];
 
   @override
@@ -63,9 +63,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               label: 'EOC Command',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bolt_rounded),
-              activeIcon: Icon(Icons.bolt_rounded, size: 24),
-              label: 'Mesh Lab',
+              icon: Icon(Icons.feed_rounded),
+              activeIcon: Icon(Icons.feed_rounded, size: 24),
+              label: 'Live Alerts',
             ),
           ],
         ),
@@ -82,7 +82,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       case 2:
         return Colors.blueAccent;
       case 3:
-        return Colors.purpleAccent;
+        return Colors.amberAccent;
       default:
         return const Color(0xFF10B981);
     }

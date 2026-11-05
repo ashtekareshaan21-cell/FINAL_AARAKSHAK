@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../shared/constants/app_brand.dart';
 import '../../core/disaster/disaster_service.dart';
 import '../../core/disaster/live_disaster_service.dart';
 import '../../core/weather/weather_service.dart';
+import '../../core/services/location_service.dart' as distance_utils;
+import '../location/location_provider.dart';
 
-class AlertsScreen extends StatefulWidget {
+class AlertsScreen extends ConsumerStatefulWidget {
   const AlertsScreen({super.key});
 
   @override
-  State<AlertsScreen> createState() => _AlertsScreenState();
+  ConsumerState<AlertsScreen> createState() => _AlertsScreenState();
 }
 
-class _AlertsScreenState extends State<AlertsScreen> {
-  // Phase 1: EONET + GDACS + USGS, not EONET alone.
-  final DisasterDataService _disasterService = CombinedDisasterService();
-  // Phase 0: weather is intentionally not fetched here (see _fetchEvents).
+class _AlertsScreenState extends ConsumerState<AlertsScreen> {
+  // Phase 1: EONET + GDACS + USGS live combined disaster feeds
+  final CombinedDisasterService _disasterService = CombinedDisasterService();
 
   List<DisasterEvent> _events = [];
   WeatherSnapshot? _weatherSnapshot;
@@ -31,9 +33,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
   Future<void> _fetchEvents() async {
     setState(() { _isLoading = true; });
     final list = await _disasterService.getEvents();
-    // Phase 0 safety: do NOT fetch weather for hardcoded Pune
-    // coordinates. The weather card stays hidden until Alerts receives
-    // the user's real location (Phase 1).
     if (mounted) {
       setState(() {
         _events = list;
@@ -43,16 +42,90 @@ class _AlertsScreenState extends State<AlertsScreen> {
     }
   }
 
+  bool _hasCoordinates(DisasterEvent ev) {
+    if (ev.latitude == 0.0 && ev.longitude == 0.0) return false;
+    if (ev.latitude < -90.0 || ev.latitude > 90.0) return false;
+    if (ev.longitude < -180.0 || ev.longitude > 180.0) return false;
+    return true;
+  }
+
+  double? _computeDistance(DisasterEvent ev, LocationData location) {
+    if (!location.isConfirmedForUse) return null;
+    if (!_hasCoordinates(ev)) return null;
+    return distance_utils.LocationService.calculateDistanceKm(
+      location.latitude,
+      location.longitude,
+      ev.latitude,
+      ev.longitude,
+    );
+  }
+
+  String _formatDistance(double? distKm, bool isLocationConfirmed) {
+    if (!isLocationConfirmed || distKm == null) return '--';
+    if (distKm < 1.0) return 'Nearby';
+    if (distKm < 10.0) return '${distKm.toStringAsFixed(1)} km away';
+    return '${distKm.round()} km away';
+  }
+
+  List<DisasterEvent> _getSortedEvents(LocationData location) {
+    final list = List<DisasterEvent>.from(_events);
+    if (!location.isConfirmedForUse) {
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return list;
+    }
+
+    list.sort((a, b) {
+      final aHasCoord = _hasCoordinates(a);
+      final bHasCoord = _hasCoordinates(b);
+
+      if (aHasCoord && !bHasCoord) return -1;
+      if (!aHasCoord && bHasCoord) return 1;
+      if (!aHasCoord && !bHasCoord) return b.timestamp.compareTo(a.timestamp);
+
+      final distA = distance_utils.LocationService.calculateDistanceKm(
+        location.latitude,
+        location.longitude,
+        a.latitude,
+        a.longitude,
+      );
+      final distB = distance_utils.LocationService.calculateDistanceKm(
+        location.latitude,
+        location.longitude,
+        b.latitude,
+        b.longitude,
+      );
+
+      final cmp = distA.compareTo(distB);
+      if (cmp != 0) return cmp;
+      return b.timestamp.compareTo(a.timestamp);
+    });
+
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final location = ref.watch(locationStateProvider);
+    final bool isLocationConfirmed = location.isConfirmedForUse;
     final statusTag = _disasterService.statusTag;
+    final sortedEvents = _getSortedEvents(location);
+    final unavailableFeeds = _disasterService.unavailableFeeds;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
-        title: const Text('DISASTER INTELLIGENCE & OFFICIAL ALERTS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+        title: Row(
+          children: const [
+            Icon(Icons.feed_rounded, color: Colors.amberAccent, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'LIVE DISASTER ALERTS',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.8),
+            ),
+          ],
+        ),
         actions: [
           IconButton(icon: const Icon(Icons.refresh_rounded, color: Colors.white70), onPressed: _fetchEvents),
         ],
@@ -78,16 +151,19 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('ENVIRONMENTAL DATA PROVENANCE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white.withValues(alpha: 0.5))),
-                        const SizedBox(height: 2),
+                        Text(
+                          'OFFICIAL FEEDS PROVENANCE (EONET • GDACS • USGS)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10.5, color: Colors.white.withValues(alpha: 0.6)),
+                        ),
+                        const SizedBox(height: 3),
                         Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Text(
-                                'Geofence: Active GPS Sector Target',
+                                isLocationConfirmed ? 'Sector: ${location.label}' : 'Sector: Location Not Confirmed',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -105,16 +181,81 @@ class _AlertsScreenState extends State<AlertsScreen> {
               ),
             ),
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
 
-            // Live / Cached Weather Snapshot Card
+            // Honest Feed Warning Banner (if any feed is unreachable)
+            if (unavailableFeeds.isNotEmpty) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.cloud_off_rounded, color: Colors.redAccent, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Live feed unavailable: ${unavailableFeeds.join(', ')} (showing remaining feeds)',
+                        style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // Unconfirmed Location Hint Line
+            if (!isLocationConfirmed) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.location_off_rounded, color: Colors.amber, size: 16),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Confirm your location to see distances',
+                        style: TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // Live / Cached Weather Snapshot Card (if available)
             if (_weatherSnapshot != null) _buildWeatherSnapshotCard(_weatherSnapshot!),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
 
-            const Text(
-              'ACTIVE HAZARD WARNINGS & OFFICIAL FEEDS',
-              style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.8),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'ACTIVE HAZARD WARNINGS & OFFICIAL FEEDS',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.8),
+                  ),
+                ),
+                if (isLocationConfirmed && sortedEvents.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    'Nearest First',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ],
             ),
 
             const SizedBox(height: 10),
@@ -134,7 +275,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                         ],
                       ),
                     )
-                  : _events.isEmpty
+                  : sortedEvents.isEmpty
                       ? Center(
                           child: Padding(
                             padding: const EdgeInsets.all(24.0),
@@ -168,11 +309,12 @@ class _AlertsScreenState extends State<AlertsScreen> {
                           ),
                         )
                       : ListView.builder(
-                          itemCount: _events.length,
+                          itemCount: sortedEvents.length,
                           itemBuilder: (context, idx) {
-                            final ev = _events[idx];
+                            final ev = sortedEvents[idx];
                             final isCritical = ev.severity == 'CRITICAL';
-                            final isLocal = ev.id.startsWith('LOC');
+                            final distKm = _computeDistance(ev, location);
+                            final distanceText = _formatDistance(distKm, isLocationConfirmed);
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 10),
@@ -180,7 +322,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFF1E293B),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: isLocal ? Colors.amber.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.08)),
+                                border: Border.all(
+                                  color: isCritical
+                                      ? Colors.redAccent.withValues(alpha: 0.3)
+                                      : Colors.white.withValues(alpha: 0.08),
+                                ),
                               ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +349,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Expanded(
                                               child: Text(
@@ -211,6 +357,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
                                               ),
                                             ),
+                                            const SizedBox(width: 8),
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                               decoration: BoxDecoration(
@@ -219,27 +366,81 @@ class _AlertsScreenState extends State<AlertsScreen> {
                                               ),
                                               child: Text(
                                                 ev.severity,
-                                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isCritical ? Colors.redAccent : Colors.amber),
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isCritical ? Colors.redAccent : Colors.amber,
+                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Category: ${ev.category} • Source: ${ev.source}',
-                                          style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.6)),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            // Real source badge (EONET / GDACS / USGS)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blueGrey.withValues(alpha: 0.3),
+                                                borderRadius: BorderRadius.circular(3),
+                                              ),
+                                              child: Text(
+                                                ev.source,
+                                                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.cyanAccent),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            // Distance badge
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                              decoration: BoxDecoration(
+                                                color: Colors.amber.withValues(alpha: 0.15),
+                                                borderRadius: BorderRadius.circular(3),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(Icons.near_me_rounded, size: 10, color: Colors.amberAccent),
+                                                  const SizedBox(width: 3),
+                                                  Text(
+                                                    distanceText,
+                                                    style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.amberAccent),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                '• ${ev.category}',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(fontSize: 10.5, color: Colors.white.withValues(alpha: 0.6)),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(height: 4),
+                                        const SizedBox(height: 6),
                                         Row(
                                           children: [
                                             Icon(Icons.access_time_rounded, color: Colors.white.withValues(alpha: 0.4), size: 12),
                                             const SizedBox(width: 4),
-                                            Text('Updated ${ev.ageLabel}', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.4))),
+                                            Text(
+                                              'Updated ${ev.ageLabel}',
+                                              style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.4)),
+                                            ),
                                             const SizedBox(width: 10),
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                              decoration: BoxDecoration(color: emeraldColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(3)),
-                                              child: Text('● ${ev.freshnessTag}', style: const TextStyle(fontSize: 8, color: emeraldColor, fontWeight: FontWeight.bold)),
+                                              decoration: BoxDecoration(
+                                                color: emeraldColor.withValues(alpha: 0.2),
+                                                borderRadius: BorderRadius.circular(3),
+                                              ),
+                                              child: Text(
+                                                '● ${ev.freshnessTag}',
+                                                style: const TextStyle(fontSize: 8, color: emeraldColor, fontWeight: FontWeight.bold),
+                                              ),
                                             ),
                                           ],
                                         ),

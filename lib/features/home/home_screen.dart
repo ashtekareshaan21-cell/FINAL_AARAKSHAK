@@ -279,6 +279,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ],
                         ),
                       ),
+
+                      const SizedBox(height: 12),
+
+                      // 7. Mesh Lab — Test Mode Entry Point
+                      InkWell(
+                        onTap: () => context.push('/mesh-lab'),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.purpleAccent.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.bolt_rounded, color: Colors.purpleAccent, size: 22),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Mesh Lab — Test Mode',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Simulation only — not real mesh',
+                                      style: TextStyle(fontSize: 10, color: Colors.white60),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => context.push('/mesh-lab'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.purpleAccent,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: const Text('OPEN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

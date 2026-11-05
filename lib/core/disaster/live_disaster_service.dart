@@ -16,6 +16,7 @@ import 'disaster_service.dart';
 // USGS earthquakes, GeoJSON feed (magnitude 2.5+, past day).
 class UsgsEarthquakeService implements DisasterDataService {
   List<DisasterEvent> _cached = [];
+  bool lastFetchSucceeded = false;
 
   @override
   SubsystemCapability get statusTag =>
@@ -26,7 +27,10 @@ class UsgsEarthquakeService implements DisasterDataService {
     try {
       final response =
           await http.get(Uri.parse(AppConfig.usgsFeedUrl)).timeout(const Duration(seconds: 6));
-      if (response.statusCode != 200) return _cached;
+      if (response.statusCode != 200) {
+        lastFetchSucceeded = false;
+        return _cached;
+      }
       final data = json.decode(response.body);
       final features = data['features'] as List? ?? [];
       final results = <DisasterEvent>[];
@@ -47,13 +51,17 @@ class UsgsEarthquakeService implements DisasterDataService {
           timestamp: timeMs != null
               ? DateTime.fromMillisecondsSinceEpoch(timeMs.toInt())
               : DateTime.now(),
-          source: 'USGS Earthquake',
+          source: 'USGS',
           severity: (mag != null && mag >= 6.0) ? 'CRITICAL' : 'ELEVATED',
           freshnessTag: 'LIVE',
         ));
       }
-      if (results.isNotEmpty) _cached = results;
+      if (results.isNotEmpty) {
+        _cached = results;
+        lastFetchSucceeded = true;
+      }
     } catch (_) {
+      lastFetchSucceeded = false;
       // No invented fallback: keep the last cached live events.
     }
     return _cached;
@@ -65,6 +73,7 @@ class UsgsEarthquakeService implements DisasterDataService {
 // fallback and an event without a usable location is dropped.
 class GdacsDisasterService implements DisasterDataService {
   List<DisasterEvent> _cached = [];
+  bool lastFetchSucceeded = false;
 
   @override
   SubsystemCapability get statusTag =>
@@ -75,7 +84,10 @@ class GdacsDisasterService implements DisasterDataService {
     try {
       final response =
           await http.get(Uri.parse(AppConfig.gdacsFeedUrl)).timeout(const Duration(seconds: 6));
-      if (response.statusCode != 200) return _cached;
+      if (response.statusCode != 200) {
+        lastFetchSucceeded = false;
+        return _cached;
+      }
       final data = json.decode(response.body);
       // GDACS returns either a GeoJSON FeatureCollection or a plain
       // list under "features"/"events" — accept both shapes.
@@ -87,6 +99,7 @@ class GdacsDisasterService implements DisasterDataService {
       } else if (data is List) {
         features = data;
       } else {
+        lastFetchSucceeded = false;
         return _cached;
       }
       final results = <DisasterEvent>[];
@@ -125,8 +138,12 @@ class GdacsDisasterService implements DisasterDataService {
           freshnessTag: 'LIVE',
         ));
       }
-      if (results.isNotEmpty) _cached = results;
+      if (results.isNotEmpty) {
+        _cached = results;
+        lastFetchSucceeded = true;
+      }
     } catch (_) {
+      lastFetchSucceeded = false;
       // No invented fallback.
     }
     return _cached;
@@ -137,6 +154,8 @@ class GdacsDisasterService implements DisasterDataService {
 class CombinedDisasterService implements DisasterDataService {
   final List<DisasterDataService> _services;
   List<DisasterEvent> _cached = [];
+  final List<String> _unavailableFeeds = [];
+  List<String> get unavailableFeeds => List.unmodifiable(_unavailableFeeds);
 
   CombinedDisasterService({List<DisasterDataService>? services})
       : _services = services ??
@@ -154,18 +173,34 @@ class CombinedDisasterService implements DisasterDataService {
   Future<List<DisasterEvent>> getEvents() async {
     final results = <DisasterEvent>[];
     final seen = <String>{};
+    _unavailableFeeds.clear();
     for (final service in _services) {
+      final feedName = _getFeedName(service);
       try {
-        for (final event in await service.getEvents()) {
+        final events = await service.getEvents();
+        final bool failed = (service is UsgsEarthquakeService && !service.lastFetchSucceeded) ||
+            (service is GdacsDisasterService && !service.lastFetchSucceeded) ||
+            (service is NasaEonetDisasterService && !service.lastFetchSucceeded);
+        if (failed && events.isEmpty) {
+          _unavailableFeeds.add(feedName);
+        }
+        for (final event in events) {
           final key = '${event.source}:${event.id}';
           if (seen.add(key)) results.add(event);
         }
       } catch (_) {
-        // One dead feed must not kill the other two.
+        _unavailableFeeds.add(feedName);
       }
     }
     results.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     if (results.isNotEmpty) _cached = results;
     return _cached;
+  }
+
+  String _getFeedName(DisasterDataService s) {
+    if (s is NasaEonetDisasterService) return 'EONET';
+    if (s is GdacsDisasterService) return 'GDACS';
+    if (s is UsgsEarthquakeService) return 'USGS';
+    return s.runtimeType.toString();
   }
 }
