@@ -9,6 +9,6 @@ void main() {
         child: ResQMeshApp(),
       ),
     );
-    expect(find.text('Aarakshak'), findsWidgets);
+    expect(find.text('AARAKSHAK'), findsWidgets);
   });
 }

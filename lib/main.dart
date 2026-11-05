@@ -25,13 +25,11 @@ void main() async {
   // Phase 2: Start sync and WebSocket client once at startup
   final incidentRepository = IncidentRepository();
   final internetTransport = InternetTransport();
-  final bleTransport = SimulatedBleTransport();
   await internetTransport.start();
-  await bleTransport.start();
 
   final syncService = SyncService(
     repository: incidentRepository,
-    transports: [internetTransport, bleTransport],
+    transports: [internetTransport],
   );
   syncService.start();
 

@@ -51,7 +51,7 @@ class SosController {
               _activeSos = _activeSos!.copyWith(status: SosStatus.relayed);
               _sosStreamController.add(_activeSos);
               _saveSosPacket(_activeSos!);
-            } else if ((inc.status == 'ACKNOWLEDGED' || inc.status == 'ASSIGNED') &&
+            } else if (inc.status == 'ACKNOWLEDGED' &&
                 _activeSos!.status != SosStatus.receivedByResponder) {
               _activeSos = _activeSos!.copyWith(
                 status: SosStatus.receivedByResponder,

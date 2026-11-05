@@ -101,19 +101,6 @@ class SyncService {
               );
               delivered = true;
               syncedCount++;
-
-              // If relayed via offline mesh, trigger realistic responder ACK after 4 seconds
-              if (transport is! InternetTransport) {
-                Timer(const Duration(seconds: 4), () async {
-                  await repository.assignResponder(
-                    incident.id,
-                    'Rescue Station Relay Alpha',
-                    8,
-                    notes: 'SOS received via BLE mesh relay. Responder unit dispatched.',
-                  );
-                });
-              }
-
               break;
             } else {
               updateSyncStatus(result.message);

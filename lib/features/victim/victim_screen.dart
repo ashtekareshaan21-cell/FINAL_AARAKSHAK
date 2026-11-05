@@ -776,7 +776,7 @@ class _VictimScreenState extends State<VictimScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text('Dispatched Unit: ${incident.assignedUnit}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
-                  Text('Estimated Arrival: ~${incident.etaMinutes > 0 ? incident.etaMinutes : 18} minutes', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11)),
+                  Text('Estimated Arrival: ${incident.etaMinutes > 0 ? "~${incident.etaMinutes} minutes" : "Awaiting EOC dispatch estimate"}', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11)),
                   if (incident.eocNotes.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text('Instructions: "${incident.eocNotes}"', style: const TextStyle(color: Colors.amberAccent, fontSize: 11, fontStyle: FontStyle.italic)),
