@@ -34,13 +34,13 @@ class SosPacket {
   String get statusLabel {
     switch (status) {
       case SosStatus.created:
-        return 'SOS CREATED';
+        return 'CREATED';
       case SosStatus.queued:
-        return 'QUEUED IN OUTBOX';
+        return 'QUEUED';
       case SosStatus.relayed:
-        return 'RELAYED VIA MESH';
+        return 'RELAYED';
       case SosStatus.receivedByResponder:
-        return 'RECEIVED BY RESPONDER';
+        return 'RECEIVED';
       case SosStatus.cancelled:
         return 'CANCELLED';
     }

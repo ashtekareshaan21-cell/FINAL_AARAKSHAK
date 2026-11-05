@@ -85,28 +85,28 @@ class EmergencyActionPanel extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            // Step Progress Workflow: CREATED -> QUEUED -> RELAYED -> RECEIVED BY RESPONDER
+            // Step Progress Workflow: CREATED -> QUEUED -> RELAYED -> RECEIVED
             _buildStatusStep(
               stepNumber: 1,
-              label: 'SOS CREATED',
+              label: 'CREATED',
               isDone: true,
               isActive: activeSos!.status == SosStatus.created,
             ),
             _buildStatusStep(
               stepNumber: 2,
-              label: 'QUEUED IN MESH OUTBOX',
+              label: 'QUEUED',
               isDone: activeSos!.status.index >= SosStatus.queued.index,
               isActive: activeSos!.status == SosStatus.queued,
             ),
             _buildStatusStep(
               stepNumber: 3,
-              label: 'RELAYED VIA P2P MESH',
+              label: 'RELAYED',
               isDone: activeSos!.status.index >= SosStatus.relayed.index,
               isActive: activeSos!.status == SosStatus.relayed,
             ),
             _buildStatusStep(
               stepNumber: 4,
-              label: 'RECEIVED BY RESPONDER (EOC)',
+              label: 'RECEIVED',
               isDone: activeSos!.status == SosStatus.receivedByResponder,
               isActive: activeSos!.status == SosStatus.receivedByResponder,
             ),

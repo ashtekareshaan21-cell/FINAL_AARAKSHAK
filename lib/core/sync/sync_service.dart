@@ -11,10 +11,12 @@ class SyncService {
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   bool isSyncing = false;
+  final void Function(String incidentId, String ackId)? onPacketDelivered;
 
   SyncService({
     required this.repository,
     required this.transports,
+    this.onPacketDelivered,
     Connectivity? connectivity,
   }) : connectivity = connectivity ?? Connectivity() {
     _initConnectivityListener();
@@ -27,6 +29,10 @@ class SyncService {
         syncPendingPackets();
       }
     });
+  }
+
+  void start() {
+    syncPendingPackets();
   }
 
   Future<int> syncPendingPackets() async {
@@ -49,10 +55,15 @@ class SyncService {
 
         // Try primary InternetTransport first, then fall back to Mesh/LoRa
         for (final transport in transports) {
-          if (transport.getStatus() == TransportStatus.connected) {
+          final bool canAttempt = (transport is InternetTransport)
+              ? transport.isConfigured
+              : (transport.getStatus() == TransportStatus.connected);
+
+          if (canAttempt) {
             final result = await transport.send(packetBytes);
             if (result.success) {
               await repository.updateStatus(incident.id, 'DELIVERED');
+              onPacketDelivered?.call(incident.id, result.ackId ?? '');
               await repository.logPacketEvent(
                 sourceNode: incident.sourceNode,
                 packetId: incident.packetId,

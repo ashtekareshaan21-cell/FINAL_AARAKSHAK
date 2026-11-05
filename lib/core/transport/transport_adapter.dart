@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
@@ -47,7 +48,7 @@ class TransmissionResult {
   final int hops;
   final String? ackId;
 
-  TransmissionResult({
+  const TransmissionResult({
     required this.success,
     required this.message,
     this.hops = 0,
@@ -81,7 +82,9 @@ class InternetTransport implements TransportAdapter {
       : backendUrl = backendUrl ?? AppConfig.serverBaseUrl,
         apiToken = apiToken ?? AppConfig.apiToken;
 
-  bool get isConfigured => AppConfig.isServerConfigured;
+  bool get isConfigured =>
+      backendUrl.isNotEmpty &&
+      (backendUrl.startsWith('https://') || backendUrl.startsWith('http://'));
 
   @override
   String get name => 'Internet REST API';
@@ -132,15 +135,22 @@ class InternetTransport implements TransportAdapter {
         Uri.parse('$backendUrl/api/v1/telemetry/inject-packet'),
         headers: headers,
         body: '{"raw_hex": "$hex"}',
-      ).timeout(const Duration(seconds: 4));
+      ).timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         _status = TransportStatus.connected;
+        String? ackToken;
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map && decoded['ack_token'] != null) {
+            ackToken = decoded['ack_token'].toString();
+          }
+        } catch (_) {}
         return TransmissionResult(
           success: true,
           message: 'Delivered directly to backend server (HTTP ${response.statusCode})',
           hops: 0,
-          ackId: 'ACK-REST-200',
+          ackId: ackToken ?? 'ACK-REST-${response.statusCode}',
         );
       } else {
         _status = TransportStatus.error;

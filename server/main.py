@@ -196,7 +196,7 @@ async def inject_packet(req: PacketInjectRequest, authorization: Optional[str] =
         """, (
             incident_id, source_node, packet_id, ttl, hops, ts,
             client_prio_idx, server_prio_idx, lat, lon,
-            battery, adults, children, payload_text, stored_crc, hex_str, "ACKNOWLEDGED", now_ts
+            battery, adults, children, payload_text, stored_crc, hex_str, "INGESTED", now_ts
         ))
         conn.commit()
     except sqlite3.IntegrityError:
@@ -241,11 +241,122 @@ def get_active_packets():
     conn.close()
     return [dict(r) for r in rows]
 
+async def handle_explicit_ack(token_or_id: str, message: str = "Acknowledged by EOC responder") -> Optional[dict]:
+    # Normalize token/id: handle both 'ACK-INC-...' and 'INC-...'
+    raw = token_or_id.strip()
+    if raw.startswith("ACK-"):
+        inc_id = raw[4:]
+    else:
+        inc_id = raw
+
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, source_node, packet_id FROM server_incidents WHERE id = ?", (inc_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return None
+
+    cursor.execute("UPDATE server_incidents SET status = 'ACKNOWLEDGED' WHERE id = ?", (inc_id,))
+    conn.commit()
+    conn.close()
+
+    ack_event = {
+        "event": "RESPONDER_ACK",
+        "incident_id": row[0],
+        "ack_token": f"ACK-{row[0]}",
+        "source_node": row[1],
+        "packet_id": row[2],
+        "message": message,
+        "timestamp": int(time.time()),
+    }
+    await manager.broadcast(ack_event)
+    return ack_event
+
+class AckRequest(BaseModel):
+    ack_token: Optional[str] = None
+    incident_id: Optional[str] = None
+    message: Optional[str] = "Acknowledged by EOC responder"
+
+@app.post("/api/v1/incidents/acknowledge")
+async def acknowledge_incident(req: AckRequest, authorization: Optional[str] = Header(default=None)):
+    require_token(authorization)
+    token_or_id = req.ack_token or req.incident_id
+    if not token_or_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": {"code": "MISSING_IDENTIFIER", "message": "Either ack_token or incident_id must be provided"}}
+        )
+    result = await handle_explicit_ack(token_or_id, req.message or "Acknowledged by EOC responder")
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": {"code": "INCIDENT_NOT_FOUND", "message": f"Incident '{token_or_id}' not found"}}
+        )
+    return {"status": "SUCCESS", "acknowledged": result}
+
+def validate_ws_auth(token: Optional[str]) -> bool:
+    """Validates the auth token supplied in a WebSocket acknowledgement frame.
+    Fails closed: returns False if AARAKSHAK_API_TOKEN is unset or empty,
+    or if the supplied token does not match.
+    """
+    if not API_TOKEN:
+        return False
+    if not token or not isinstance(token, str):
+        return False
+    clean = token.strip()
+    if clean.startswith("Bearer "):
+        clean = clean[7:].strip()
+    return clean == API_TOKEN
+
+async def process_ws_message(websocket: WebSocket, text: str) -> None:
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict):
+            action = data.get("action") or data.get("event")
+            if action in ("ACKNOWLEDGE", "ACK", "RESPONDER_ACK"):
+                auth_token = data.get("auth_token") or data.get("token")
+                if not validate_ws_auth(auth_token):
+                    print("WARNING: WebSocket acknowledgement attempt rejected: invalid or missing auth token")
+                    await websocket.send_json({
+                        "event": "ERROR",
+                        "error": {
+                            "code": "UNAUTHORIZED",
+                            "message": "Valid auth_token required for acknowledgement"
+                        }
+                    })
+                    return
+
+                token_or_id = data.get("ack_token") or data.get("incident_id") or data.get("id")
+                msg = data.get("message") or "Acknowledged by EOC responder"
+                if not token_or_id:
+                    await websocket.send_json({
+                        "event": "ERROR",
+                        "error": {
+                            "code": "MISSING_IDENTIFIER",
+                            "message": "Either ack_token or incident_id must be provided"
+                        }
+                    })
+                    return
+
+                result = await handle_explicit_ack(str(token_or_id), str(msg))
+                if not result:
+                    await websocket.send_json({
+                        "event": "ERROR",
+                        "error": {
+                            "code": "INCIDENT_NOT_FOUND",
+                            "message": f"Incident '{token_or_id}' not found"
+                        }
+                    })
+    except Exception:
+        pass
+
 @app.websocket("/api/v1/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            await websocket.receive_text()
+            text = await websocket.receive_text()
+            await process_ws_message(websocket, text)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
