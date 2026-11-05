@@ -12,6 +12,7 @@ class SyncService {
   final Connectivity connectivity;
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  Timer? _periodicTimer;
   bool isSyncing = false;
   final void Function(String incidentId, String ackId)? onPacketDelivered;
 
@@ -49,6 +50,10 @@ class SyncService {
 
   void start() {
     syncPendingPackets();
+    _periodicTimer?.cancel();
+    _periodicTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      syncPendingPackets();
+    });
   }
 
   Future<int> syncPendingPackets() async {
@@ -157,6 +162,7 @@ class SyncService {
   }
 
   void dispose() {
+    _periodicTimer?.cancel();
     _connectivitySubscription?.cancel();
     _syncStatusController.close();
   }
