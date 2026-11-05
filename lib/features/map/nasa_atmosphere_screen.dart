@@ -28,7 +28,6 @@ class _NasaAtmosphereScreenState extends ConsumerState<NasaAtmosphereScreen> {
   bool _showEonetEvents = true;
 
   AtmosphericTelemetry? _currentTelemetry;
-  DisasterEvent? _selectedEvent;
   double _customLat = 18.5204;
   double _customLng = 73.8567;
   bool _hasCustomCenter = false;
@@ -190,7 +189,6 @@ class _NasaAtmosphereScreenState extends ConsumerState<NasaAtmosphereScreen> {
                     onTelemetryUpdated: (t) =>
                         setState(() => _currentTelemetry = t),
                     onEventSelected: (e) {
-                      setState(() => _selectedEvent = e);
                       _showEventDetailsModal(context, e);
                     },
                   ),
@@ -396,37 +394,41 @@ class _NasaAtmosphereScreenState extends ConsumerState<NasaAtmosphereScreen> {
                     ),
                     const Divider(color: Colors.white12),
 
-                    // GIBS Tile Layer Selection
-                    ...NasaAtmosphereService.layers.entries.map((entry) {
-                      final meta = entry.value;
-                      final isSelected = _activeLayer == meta.type;
-                      return RadioListTile<NasaGibsLayerType>(
-                        value: meta.type,
-                        groupValue: _activeLayer,
-                        activeColor: Colors.cyanAccent,
-                        title: Text(
-                          meta.name,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        subtitle: Text(
-                          meta.description,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.white54,
-                          ),
-                        ),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() => _activeLayer = val);
-                            setModalState(() {});
-                          }
-                        },
-                      );
-                    }),
+                    RadioGroup<NasaGibsLayerType>(
+                      groupValue: _activeLayer,
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _activeLayer = val);
+                          setModalState(() {});
+                        }
+                      },
+                      child: Column(
+                        children: NasaAtmosphereService.layers.entries.map((entry) {
+                          final meta = entry.value;
+                          final isSelected = _activeLayer == meta.type;
+                          return RadioListTile<NasaGibsLayerType>(
+                            value: meta.type,
+                            selected: isSelected,
+                            activeColor: Colors.cyanAccent,
+                            title: Text(
+                              meta.name,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            subtitle: Text(
+                              meta.description,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.white54,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
 
                     const SizedBox(height: 12),
                     const Text(

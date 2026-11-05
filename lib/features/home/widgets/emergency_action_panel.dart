@@ -5,12 +5,14 @@ class EmergencyActionPanel extends StatelessWidget {
   final SosPacket? activeSos;
   final VoidCallback onTriggerSos;
   final VoidCallback onCancelSos;
+  final String? syncStatusMessage;
 
   const EmergencyActionPanel({
     super.key,
     required this.activeSos,
     required this.onTriggerSos,
     required this.onCancelSos,
+    this.syncStatusMessage,
   });
 
   @override
@@ -24,7 +26,7 @@ class EmergencyActionPanel extends StatelessWidget {
         color: isSosActive ? const Color(0xFF450A0A) : const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSosActive ? const Color(0xFFFF2E4C) : Colors.white.withOpacity(0.12),
+          color: isSosActive ? const Color(0xFFFF2E4C) : Colors.white.withValues(alpha: 0.12),
           width: isSosActive ? 2.0 : 1.0,
         ),
       ),
@@ -42,7 +44,7 @@ class EmergencyActionPanel extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 6,
-                shadowColor: Colors.redAccent.withOpacity(0.5),
+                shadowColor: Colors.redAccent.withValues(alpha: 0.5),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -111,6 +113,49 @@ class EmergencyActionPanel extends StatelessWidget {
               isActive: activeSos!.status == SosStatus.receivedByResponder,
             ),
 
+            // Sync status feedback line (e.g. while QUEUED or attempting transmission)
+            if (activeSos!.status == SosStatus.queued || (syncStatusMessage != null && syncStatusMessage!.isNotEmpty && activeSos!.status != SosStatus.receivedByResponder)) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: activeSos!.status == SosStatus.queued
+                        ? Colors.amber.withValues(alpha: 0.4)
+                        : Colors.white24,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: activeSos!.status == SosStatus.queued
+                          ? const CircularProgressIndicator(strokeWidth: 1.5, color: Colors.amber)
+                          : const Icon(Icons.sync_rounded, size: 12, color: Colors.white70),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        syncStatusMessage?.isNotEmpty == true
+                            ? syncStatusMessage!
+                            : 'Waiting for server — contacting backend...',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: activeSos!.status == SosStatus.queued
+                              ? Colors.amber
+                              : Colors.white70,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             if (activeSos!.responderAckMessage != null) ...[
               const SizedBox(height: 12),
               Container(
@@ -122,7 +167,7 @@ class EmergencyActionPanel extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.verified_user_rounded, color: const Color(0xFF10B981), size: 20),
+                    const Icon(Icons.verified_user_rounded, color: Color(0xFF10B981), size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(

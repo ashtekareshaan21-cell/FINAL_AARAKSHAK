@@ -122,7 +122,11 @@ class RiskStatusCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${(riskState.confidence * 100).toStringAsFixed(0)}%',
+                    (riskState.confidence <= 0 ||
+                            riskState.primaryHazard == 'No Active Hazards Nearby' ||
+                            riskState.primaryHazard == null)
+                        ? '--'
+                        : '${(riskState.confidence * 100).toStringAsFixed(0)}%',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -146,7 +150,7 @@ class RiskStatusCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  riskState.primaryHazard ?? 'No immediate hazard',
+                  riskState.primaryHazard ?? 'No Active Hazards Nearby',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

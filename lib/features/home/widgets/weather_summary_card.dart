@@ -14,83 +14,91 @@ class WeatherSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isLive = isOnline && weather.stateTag == WeatherStateTag.live;
-    final bool isUnavailable =
-        weather.stateTag == WeatherStateTag.unavailable;
+    final bool isUnavailable = weather.stateTag == WeatherStateTag.unavailable;
 
-    final Color badgeColor = isLive
+    final Color badgeBg = isLive
+        ? const Color(0xFF065F46)
+        : isUnavailable
+            ? const Color(0xFF1E293B)
+            : const Color(0xFF78350F);
+
+    final Color badgeBorder = isLive
         ? const Color(0xFF10B981)
         : isUnavailable
-            ? Colors.grey
-            : Colors.amber;
-    final String statusLabel = isLive
-        ? '● LIVE TELEMETRY'
+            ? const Color(0xFF475569)
+            : const Color(0xFFF59E0B);
+
+    final Color badgeText = isLive
+        ? const Color(0xFF34D399)
         : isUnavailable
-            ? '● DATA UNAVAILABLE'
-            : '● OFFLINE CACHED (${_formatAge(weather.observedAt)})';
+            ? const Color(0xFF94A3B8)
+            : const Color(0xFFFBBF24);
+
+    final IconData badgeIcon = isLive
+        ? Icons.sensors_rounded
+        : isUnavailable
+            ? Icons.cloud_off_rounded
+            : Icons.history_rounded;
+
+    final String badgeLabel = isLive
+        ? 'LIVE TELEMETRY'
+        : isUnavailable
+            ? 'DATA UNAVAILABLE'
+            : 'OFFLINE CACHED';
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: badgeColor.withOpacity(0.3), width: 1),
+        border: Border.all(color: badgeBorder.withValues(alpha: 0.4), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Status Bar
+          // Header Status Bar: Unmistakable Badge + Observed At Time
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: badgeBorder, width: 1),
+                ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      isLive ? Icons.wb_sunny_rounded : Icons.cloud_off_rounded,
-                      color: badgeColor,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    const Flexible(
-                      child: Text(
-                        'WEATHER TELEMETRY',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                          color: Colors.white70,
-                          letterSpacing: 0.8,
-                        ),
+                    Icon(badgeIcon, size: 12, color: badgeText),
+                    const SizedBox(width: 5),
+                    Text(
+                      badgeLabel,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w900,
+                        color: badgeText,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: badgeColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: badgeColor.withOpacity(0.4)),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: badgeColor,
-                    ),
+                child: Text(
+                  'Observed: ${_formatTime(weather.observedAt)}${!isLive && !isUnavailable ? ' (${_formatAge(weather.observedAt)})' : ''}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white70,
                   ),
                 ),
               ),
             ],
           ),
-
 
           const SizedBox(height: 10),
 
@@ -104,8 +112,8 @@ class WeatherSummaryCard extends StatelessWidget {
             ),
           ),
           Text(
-            'Source: ${weather.provider} • Observed at ${_formatTime(weather.observedAt)}',
-            style: const TextStyle(fontSize: 10, color: Colors.white38),
+            'Source: ${weather.provider}',
+            style: const TextStyle(fontSize: 10, color: Colors.white54),
           ),
 
           const SizedBox(height: 12),

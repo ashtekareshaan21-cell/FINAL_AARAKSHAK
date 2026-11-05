@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'location_service.dart';
+export 'location_service.dart';
 
 final locationServiceProvider = Provider<LocationService>((ref) {
   final service = LocationService();

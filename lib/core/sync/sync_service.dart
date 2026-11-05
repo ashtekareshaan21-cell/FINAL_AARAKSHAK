@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:http/http.dart' as http;
 import '../../data/repositories/incident_repository.dart';
 import '../transport/transport_adapter.dart';
 import '../packet/packet_engine.dart';
@@ -12,6 +14,17 @@ class SyncService {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   bool isSyncing = false;
   final void Function(String incidentId, String ackId)? onPacketDelivered;
+
+  String _syncStatusMessage = '';
+  String get syncStatusMessage => _syncStatusMessage;
+
+  final _syncStatusController = StreamController<String>.broadcast();
+  Stream<String> get syncStatusStream => _syncStatusController.stream;
+
+  void updateSyncStatus(String msg) {
+    _syncStatusMessage = msg;
+    _syncStatusController.add(msg);
+  }
 
   SyncService({
     required this.repository,
@@ -26,7 +39,10 @@ class SyncService {
     _connectivitySubscription = connectivity.onConnectivityChanged.listen((results) {
       if (results.any((r) => r != ConnectivityResult.none)) {
         // Connectivity restored! Trigger background sync
+        updateSyncStatus('Internet restored — syncing pending packets...');
         syncPendingPackets();
+      } else {
+        updateSyncStatus('No internet — will retry when back online');
       }
     });
   }
@@ -43,6 +59,7 @@ class SyncService {
     try {
       final pending = await repository.getQueuedIncidents();
       if (pending.isEmpty) {
+        await syncRemoteAcks();
         isSyncing = false;
         return 0;
       }
@@ -59,9 +76,15 @@ class SyncService {
               ? transport.isConfigured
               : (transport.getStatus() == TransportStatus.connected);
 
+          if (!canAttempt && transport is InternetTransport && !transport.isConfigured) {
+            updateSyncStatus('Server not configured — run with --dart-define');
+          }
+
           if (canAttempt) {
+            updateSyncStatus('Contacting server — transmitting 48-byte packet...');
             final result = await transport.send(packetBytes);
             if (result.success) {
+              updateSyncStatus(result.message);
               await repository.updateStatus(incident.id, 'DELIVERED');
               onPacketDelivered?.call(incident.id, result.ackId ?? '');
               await repository.logPacketEvent(
@@ -74,6 +97,8 @@ class SyncService {
               delivered = true;
               syncedCount++;
               break;
+            } else {
+              updateSyncStatus(result.message);
             }
           }
         }
@@ -89,6 +114,7 @@ class SyncService {
           );
         }
       }
+      await syncRemoteAcks();
     } finally {
       isSyncing = false;
     }
@@ -96,7 +122,37 @@ class SyncService {
     return syncedCount;
   }
 
+  Future<void> syncRemoteAcks() async {
+    for (final transport in transports) {
+      if (transport is InternetTransport && transport.isConfigured) {
+        try {
+          final uri = Uri.parse('${transport.backendUrl}/api/v1/packets/active');
+          final headers = <String, String>{};
+          if (transport.apiToken.isNotEmpty) {
+            headers['Authorization'] = 'Bearer ${transport.apiToken}';
+          }
+          final res = await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
+          if (res.statusCode == 200) {
+            final list = jsonDecode(res.body);
+            if (list is List) {
+              for (final item in list) {
+                if (item is Map) {
+                  final id = item['id']?.toString() ?? '';
+                  final status = item['status']?.toString() ?? '';
+                  if (status == 'ACKNOWLEDGED' && id.isNotEmpty) {
+                    await repository.updateStatus(id, 'ACKNOWLEDGED');
+                  }
+                }
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    }
+  }
+
   void dispose() {
     _connectivitySubscription?.cancel();
+    _syncStatusController.close();
   }
 }

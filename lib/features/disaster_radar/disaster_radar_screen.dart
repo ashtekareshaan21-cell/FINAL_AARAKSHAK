@@ -65,7 +65,7 @@ class DisasterRadarScreen extends ConsumerWidget {
               onTap: () => LocationSelectorModal.show(context),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                color: const Color(0xFF1E293B).withOpacity(0.8),
+                color: const Color(0xFF1E293B).withValues(alpha: 0.8),
                 child: Row(
                   children: [
                     Icon(
@@ -128,67 +128,99 @@ class DisasterRadarScreen extends ConsumerWidget {
                             end: Alignment.centerRight,
                           ),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.cyanAccent.withOpacity(0.4), width: 1.5),
+                          border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.4), width: 1.5),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.cyanAccent.withOpacity(0.12),
+                              color: Colors.cyanAccent.withValues(alpha: 0.12),
                               blurRadius: 10,
                               spreadRadius: 1,
                             ),
                           ],
                         ),
                         child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.cyanAccent.withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.public_rounded, color: Colors.cyanAccent, size: 22),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.cyanAccent.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.public_rounded, color: Colors.cyanAccent, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'NASA SATELLITE & ATMOSPHERE OBSERVATORY',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
                             ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'NASA SATELLITE & ATMOSPHERE OBSERVATORY',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  SizedBox(height: 2),
-                                  Text(
-                                    'Live VIIRS Clouds • Animated Wind Stream Vectors • EONET Events',
-                                    style: TextStyle(fontSize: 9, color: Colors.cyanAccent),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.cyanAccent, size: 14),
-                          ],
-                        ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Live VIIRS Clouds • Animated Wind Stream Vectors • EONET Events',
+                            style: TextStyle(fontSize: 9, color: Colors.cyanAccent),
+                          ),
+                        ],
                       ),
                     ),
+                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.cyanAccent, size: 14),
+                  ],
+                ),
+              ),
+            ),
 
-                    // 1. Interactive Offline Map
-                    activeHazardsAsync.maybeWhen(
-                      data: (hazards) => sortedAssistanceAsync.maybeWhen(
-                        data: (points) => OfflineMapWidget(
-                          userLat: location.latitude,
-                          userLng: location.longitude,
-                          hazards: hazards,
-                          assistancePoints: points,
-                          activeSos: activeSos,
-                        ),
-                        orElse: () => const SizedBox(height: 220, child: Center(child: CircularProgressIndicator())),
-                      ),
-                      orElse: () => const SizedBox(height: 220, child: Center(child: CircularProgressIndicator())),
+            // 1. Interactive Offline Map
+            activeHazardsAsync.maybeWhen(
+              data: (hazards) => sortedAssistanceAsync.maybeWhen(
+                data: (points) => OfflineMapWidget(
+                  userLat: location.latitude,
+                  userLng: location.longitude,
+                  hazards: hazards,
+                  assistancePoints: points,
+                  activeSos: activeSos,
+                ),
+                orElse: () => Container(
+                  height: 220,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.cyanAccent)),
+                        SizedBox(width: 10),
+                        Text('Loading tactical map...', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      ],
                     ),
+                  ),
+                ),
+              ),
+              orElse: () => Container(
+                height: 220,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.cyanAccent)),
+                      SizedBox(width: 10),
+                      Text('Loading offline radar map...', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
                     const SizedBox(height: 16),
 
@@ -222,9 +254,9 @@ class DisasterRadarScreen extends ConsumerWidget {
                           return Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF065F46).withOpacity(0.3),
+                              color: const Color(0xFF065F46).withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+                              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
                             ),
                             child: const Row(
                               children: [
@@ -254,7 +286,7 @@ class DisasterRadarScreen extends ConsumerWidget {
                         );
                       },
                       loading: () => const Center(child: CircularProgressIndicator.adaptive()),
-                      error: (_, __) => const Text('Unable to load hazards.', style: TextStyle(color: Colors.redAccent)),
+                      error: (_, _) => const Text('Unable to load hazards.', style: TextStyle(color: Colors.redAccent)),
                     ),
                   ],
                 ),

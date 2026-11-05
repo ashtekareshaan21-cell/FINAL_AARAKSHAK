@@ -60,6 +60,11 @@ final syncServiceProvider = Provider<SyncService>((ref) {
   );
 });
 
+final syncStatusMessageProvider = StreamProvider<String>((ref) {
+  final syncService = ref.watch(syncServiceProvider);
+  return syncService.syncStatusStream;
+});
+
 final eocWsClientProvider = Provider<EocWebSocketClient>((ref) {
   final client = EocWebSocketClient();
   ref.onDispose(() => client.dispose());
@@ -91,7 +96,8 @@ final sosControllerProvider = StateNotifierProvider<SosNotifier, SosPacket?>((re
 class SosNotifier extends StateNotifier<SosPacket?> {
   final SosController _controller;
 
-  SosNotifier(this._controller) : super(null) {
+  SosNotifier(this._controller) : super(_controller.activeSos) {
+    state = _controller.activeSos;
     _controller.sosStream.listen((packet) {
       state = packet;
     });

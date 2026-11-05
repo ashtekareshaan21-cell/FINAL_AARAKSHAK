@@ -130,10 +130,10 @@ class _NasaAtmosphereMapWidgetState extends State<NasaAtmosphereMapWidget> with 
       decoration: BoxDecoration(
         color: const Color(0xFF0B132B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.cyanAccent.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.cyanAccent.withOpacity(0.08),
+            color: Colors.cyanAccent.withValues(alpha: 0.08),
             blurRadius: 16,
             spreadRadius: 2,
           ),
@@ -180,16 +180,16 @@ class _NasaAtmosphereMapWidgetState extends State<NasaAtmosphereMapWidget> with 
                       point: center,
                       radius: 25000, // 25 km
                       useRadiusInMeter: true,
-                      color: Colors.cyanAccent.withOpacity(0.06),
-                      borderColor: Colors.cyanAccent.withOpacity(0.6),
+                      color: Colors.cyanAccent.withValues(alpha: 0.06),
+                      borderColor: Colors.cyanAccent.withValues(alpha: 0.6),
                       borderStrokeWidth: 1.5,
                     ),
                     CircleMarker(
                       point: center,
                       radius: 75000, // 75 km regional storm radius
                       useRadiusInMeter: true,
-                      color: Colors.orange.withOpacity(0.03),
-                      borderColor: Colors.orangeAccent.withOpacity(0.4),
+                      color: Colors.orange.withValues(alpha: 0.03),
+                      borderColor: Colors.orangeAccent.withValues(alpha: 0.4),
                       borderStrokeWidth: 1.0,
                     ),
                   ],
@@ -290,9 +290,9 @@ class _NasaAtmosphereMapWidgetState extends State<NasaAtmosphereMapWidget> with 
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A).withOpacity(0.85),
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.cyanAccent.withOpacity(0.5)),
+                      border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.5)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -324,9 +324,9 @@ class _NasaAtmosphereMapWidgetState extends State<NasaAtmosphereMapWidget> with 
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A).withOpacity(0.85),
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.85),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.5)),
+                        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -356,7 +356,7 @@ class _NasaAtmosphereMapWidgetState extends State<NasaAtmosphereMapWidget> with 
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A).withOpacity(0.8),
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const SizedBox(

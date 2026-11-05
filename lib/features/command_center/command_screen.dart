@@ -41,16 +41,18 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
         final previousCount = _incidents.length;
         setState(() {
           _incidents = list;
-          if (_incidents.isNotEmpty && _selectedIncident == null) {
-            _selectedIncident = _incidents.first;
-          } else if (_selectedIncident != null) {
-            final updated = list.firstWhere((i) => i.id == _selectedIncident!.id, orElse: () => list.first);
-            _selectedIncident = updated;
+          if (list.isEmpty) {
+            _selectedIncident = null;
+          } else if (_selectedIncident == null) {
+            _selectedIncident = list.first;
+          } else {
+            final idx = list.indexWhere((i) => i.id == _selectedIncident!.id);
+            _selectedIncident = idx >= 0 ? list[idx] : list.first;
           }
         });
 
         // Trigger audible beep and alarm banner if a new report or P0 signal arrives!
-        if (list.length > previousCount || list.any((i) => i.status == 'LOCAL' || i.status == 'QUEUED')) {
+        if (list.isNotEmpty && (list.length > previousCount || list.any((i) => i.status == 'LOCAL' || i.status == 'QUEUED'))) {
           _triggerEmergencyAlarm(list.first);
         }
       }
@@ -102,24 +104,37 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.2),
+                color: Colors.blueAccent.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.shield_rounded, color: Colors.blueAccent, size: 20),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('EMERGENCY OPERATIONS CENTER', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text('${AppBrand.name} Command Base • Regional EOC Sector', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.6))),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'EOC COMMAND CENTER',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  Text(
+                    '${AppBrand.name} Command Base',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.6)),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
           // Audio Alert Alarm Test Button
-          TextButton.icon(
+          IconButton(
+            tooltip: 'Test Alarm Beep',
             onPressed: () {
               AudioAlertService.playEmergencyBeep();
               ScaffoldMessenger.of(context).showSnackBar(
@@ -130,8 +145,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                 ),
               );
             },
-            icon: const Icon(Icons.volume_up_rounded, color: Colors.redAccent, size: 18),
-            label: const Text('TEST ALARM BEEP', style: TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.volume_up_rounded, color: Colors.redAccent, size: 20),
           ),
           IconButton(
             icon: const Icon(Icons.public_rounded, color: Colors.cyanAccent),
@@ -165,7 +179,30 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                 final queueWidget = _buildIncidentQueueList();
                 final detailsWidget = _selectedIncident != null
                     ? _buildIncidentDetailsPanel(_selectedIncident!)
-                    : const Center(child: Text('Select an incident to view intelligence', style: TextStyle(color: Colors.white54)));
+                    : Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.shield_outlined, color: Colors.white.withValues(alpha: 0.3), size: 48),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'EOC Dispatch Standby',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _incidents.isEmpty
+                                    ? 'Connecting to EOC Command Stream...\nIncoming packets will appear in the queue.'
+                                    : 'Select an incident from the queue to view telemetry and dispatch responders.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
 
                 if (isNarrow) {
                   return DefaultTabController(
@@ -223,7 +260,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
             color: Color.lerp(const Color(0xFFDC2626), const Color(0xFF991B1B), _pulseController!.value),
             boxShadow: [
               BoxShadow(
-                color: Colors.redAccent.withOpacity(0.5),
+                color: Colors.redAccent.withValues(alpha: 0.5),
                 blurRadius: 16,
                 spreadRadius: 2,
               ),
@@ -303,7 +340,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -315,7 +352,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
-              Text(label, style: TextStyle(fontSize: 8, color: Colors.white.withOpacity(0.5), fontWeight: FontWeight.w600)),
+              Text(label, style: TextStyle(fontSize: 8, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w600)),
             ],
           ),
         ],
@@ -330,7 +367,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,7 +380,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                 const Text('🚨 LIVE INCIDENT QUEUE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
                   child: Text('${_incidents.length} REPORTS', style: const TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold)),
                 ),
               ],
@@ -351,7 +388,30 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
           ),
           const Divider(height: 1, color: Colors.white10),
           Expanded(
-            child: ListView.separated(
+            child: _incidents.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.inbox_outlined, color: Colors.white.withValues(alpha: 0.3), size: 40),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Incident Queue Empty',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'No emergency reports active in this sector.\nListening to mesh and cloud relays...',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
               itemCount: _incidents.length,
               separatorBuilder: (ctx, i) => const Divider(height: 1, color: Colors.white10),
               itemBuilder: (ctx, i) {
@@ -362,11 +422,11 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                 return ListTile(
                   onTap: () => setState(() => _selectedIncident = incident),
                   selected: isSelected,
-                  selectedTileColor: Colors.blueAccent.withOpacity(0.15),
+                  selectedTileColor: Colors.blueAccent.withValues(alpha: 0.15),
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isP0 ? Colors.redAccent.withOpacity(0.2) : Colors.amber.withOpacity(0.2),
+                      color: isP0 ? Colors.redAccent.withValues(alpha: 0.2) : Colors.amber.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -385,7 +445,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                   ),
                   subtitle: Text(
                     '${incident.headcount} people • ${incident.medicalStatus} • ${_formatAge(incident.createdAt)}',
-                    style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
                   ),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -394,7 +454,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: emeraldColor.withOpacity(0.2),
+                          color: emeraldColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -405,7 +465,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                       const SizedBox(height: 4),
                       Text(
                         incident.status,
-                        style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 9, fontWeight: FontWeight.w600),
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 9, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -463,7 +523,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
                       child: Text(incident.status, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                     ),
                   ],
@@ -476,7 +536,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                 const SizedBox(height: 4),
                 Text(
                   '📍 Active Incident Location (${incident.latitude}, ${incident.longitude})',
-                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -507,7 +567,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: emeraldColor.withOpacity(0.4)),
+        border: Border.all(color: emeraldColor.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,7 +584,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: emeraldColor.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(color: emeraldColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
                 child: Text('${trust.score}% TRUST SCORE', style: const TextStyle(color: emeraldColor, fontWeight: FontWeight.w900, fontSize: 12)),
               ),
             ],
@@ -536,12 +596,12 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(color: Colors.blueAccent.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
                 child: const Text('🟢 PACKET CRC-16 VALID', style: TextStyle(color: Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.bold)),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: Colors.purpleAccent.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(color: Colors.purpleAccent.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
                 child: Text('👥 ${trust.corroborationsCount} CORROBORATING REPORTS', style: const TextStyle(color: Colors.purpleAccent, fontSize: 10, fontWeight: FontWeight.bold)),
               ),
             ],
@@ -549,7 +609,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
           const SizedBox(height: 10),
           ...trust.factors.map((f) => Padding(
             padding: const EdgeInsets.only(bottom: 4),
-            child: Text(f, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 11)),
+            child: Text(f, style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11)),
           )),
         ],
       ),
@@ -562,7 +622,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,7 +633,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
           if (incident.assignedUnit.isNotEmpty) ...[
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: emeraldColor.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: emeraldColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -592,6 +652,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                 child: OutlinedButton.icon(
                   onPressed: () async {
                     await _repository.verifyIncident(incident.id);
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✓ Incident report human-verified! Trust score updated.')));
                   },
                   icon: const Icon(Icons.check_circle_outline, color: emeraldColor, size: 16),
@@ -633,7 +694,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: selectedUnit,
+              initialValue: selectedUnit,
               dropdownColor: const Color(0xFF0F172A),
               style: const TextStyle(color: Colors.white, fontSize: 12),
               decoration: const InputDecoration(labelText: 'Select Response Unit', labelStyle: TextStyle(color: Colors.white70)),
@@ -659,6 +720,7 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
             onPressed: () async {
               Navigator.pop(ctx);
               await _repository.assignResponder(incident.id, selectedUnit, eta, notes: notesCtrl.text);
+              if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('🟢 Rescue Team "$selectedUnit" assigned locally. Victim notification needs server/mesh (Phase 2).')),
               );

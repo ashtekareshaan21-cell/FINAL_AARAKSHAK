@@ -10,6 +10,9 @@ import '../../core/triage/signal_extraction_service.dart';
 import '../../core/packet/packet_engine.dart';
 import '../../core/device/device_identity.dart';
 import '../../data/repositories/incident_repository.dart';
+import '../../core/utils/distance_utils.dart';
+import '../assistance/assistance_repository.dart';
+import '../assistance/assistance_model.dart';
 
 class VictimScreen extends StatefulWidget {
   const VictimScreen({super.key});
@@ -29,7 +32,9 @@ class _VictimScreenState extends State<VictimScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final RuleBasedSignalExtractionService _extractor = RuleBasedSignalExtractionService();
   final IncidentRepository _repository = IncidentRepository();
+  final AssistanceRepository _assistanceRepo = AssistanceRepository();
   final Connectivity _connectivity = Connectivity();
+  List<AssistancePoint> _assistancePoints = [];
 
   static const Color emeraldColor = Color(0xFF10B981);
 
@@ -178,9 +183,11 @@ class _VictimScreenState extends State<VictimScreen> {
 
   Future<void> _loadIncidents() async {
     final list = await _repository.getAllIncidents();
+    final points = await _assistanceRepo.getSortedAssistancePoints(userLat: _latitude, userLng: _longitude);
     if (mounted) {
       setState(() {
         _outboxIncidents = list;
+        _assistancePoints = points;
         if (list.isNotEmpty) {
           _activeSignal = list.first;
         }
@@ -436,6 +443,8 @@ class _VictimScreenState extends State<VictimScreen> {
             const SizedBox(height: 24),
             _buildNearbyAssistanceSection(),
             const SizedBox(height: 24),
+            _buildOutboxSection(),
+            const SizedBox(height: 24),
             _buildLocalAlertsTicker(),
           ],
         ),
@@ -587,7 +596,7 @@ class _VictimScreenState extends State<VictimScreen> {
     return Column(
       children: [
         GestureDetector(
-          onTap: () => _triggerInstantSOS(isOneTap: true),
+          onTap: _isSending ? null : () => _triggerInstantSOS(isOneTap: true),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 24),
@@ -615,16 +624,22 @@ class _VictimScreenState extends State<VictimScreen> {
                     color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.sos_rounded, color: Colors.white, size: 44),
+                  child: _isSending
+                      ? const SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                        )
+                      : const Icon(Icons.sos_rounded, color: Colors.white, size: 44),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  '🆘 TAP FOR IMMEDIATE SOS',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.2),
+                Text(
+                  _isSending ? '⏳ TRANSMITTING EMERGENCY SOS...' : '🆘 TAP FOR IMMEDIATE SOS',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.2),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Transmits P0 Emergency Packet via Mesh / Off-Grid Transport',
+                  _isSending ? 'Broadcasting packet across mesh relays...' : 'Transmits P0 Emergency Packet via Mesh / Off-Grid Transport',
                   style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.85)),
                 ),
               ],
@@ -842,35 +857,149 @@ class _VictimScreenState extends State<VictimScreen> {
         ),
         const SizedBox(height: 10),
 
-        _buildAssistanceCard(
-          icon: Icons.local_hospital_rounded,
-          iconColor: Colors.redAccent,
-          title: 'Sassoon General Hospital',
-          distance: '2.4 km',
-          statusText: '12 ICU Beds Available',
-          badgeText: 'OPERATIONAL',
-          badgeColor: emeraldColor,
+        if (_assistancePoints.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, color: Colors.amber, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'No verified assistance points loaded yet. For emergencies, call 108 / 112.',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ..._assistancePoints.take(3).map((p) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: _buildAssistanceCard(
+                icon: p.type == AssistanceType.hospital
+                    ? Icons.local_hospital_rounded
+                    : p.type == AssistanceType.shelter
+                        ? Icons.other_houses_rounded
+                        : Icons.airport_shuttle_rounded,
+                iconColor: p.type == AssistanceType.hospital
+                    ? Colors.redAccent
+                    : p.type == AssistanceType.shelter
+                        ? Colors.amber
+                        : Colors.blueAccent,
+                title: p.name,
+                distance: DistanceUtils.formatDistance(p.calculatedDistanceKm),
+                statusText: p.contact.isNotEmpty
+                    ? p.contact
+                    : (p.capacity > 0 ? '${p.capacity} beds available' : 'Verified point'),
+                badgeText: p.isAvailable ? 'OPERATIONAL' : 'STATUS UNKNOWN',
+                badgeColor: p.isAvailable ? emeraldColor : Colors.amber,
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  Widget _buildOutboxSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              '📦 LOCAL OUTBOX / QUEUED',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 0.5),
+            ),
+            Text(
+              '${_outboxIncidents.length} signals',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        _buildAssistanceCard(
-          icon: Icons.other_houses_rounded,
-          iconColor: Colors.amber,
-          title: 'Balewadi Flood Relief Shelter',
-          distance: '1.1 km',
-          statusText: '320 Beds & Food Supply',
-          badgeText: 'OPEN',
-          badgeColor: emeraldColor,
-        ),
-        const SizedBox(height: 8),
-        _buildAssistanceCard(
-          icon: Icons.airport_shuttle_rounded,
-          iconColor: Colors.blueAccent,
-          title: 'Disaster Relief Ambulance #09',
-          distance: '3.2 km',
-          statusText: '2 Units En Route',
-          badgeText: 'LIMITED',
-          badgeColor: Colors.amber,
-        ),
+        const SizedBox(height: 10),
+        if (_outboxIncidents.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.inbox_outlined, color: Colors.white.withValues(alpha: 0.4), size: 20),
+                const SizedBox(width: 10),
+                Text(
+                  'Outbox empty — 0 pending signals.',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+                ),
+              ],
+            ),
+          )
+        else
+          ..._outboxIncidents.take(4).map((inc) {
+            final color = _getStatusColor(inc.status);
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.radio_button_checked_rounded, color: color, size: 16),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${inc.category} • ${inc.priority}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          inc.description,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      inc.status,
+                      style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
       ],
     );
   }
@@ -1153,6 +1282,70 @@ class _VictimScreenState extends State<VictimScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    if (_descriptionController.text.trim().isEmpty) return;
+                    final signal = await _extractor.extract(_descriptionController.text);
+                    final triage = TriageEngine.calculate(signal);
+                    setModalState(() {
+                      if (_categories.contains(signal.category)) {
+                        _selectedCategory = signal.category;
+                      }
+                      if (_medicalOptions.contains(signal.medicalStatus)) {
+                        _medicalStatus = signal.medicalStatus;
+                      }
+                      _triageResult = triage;
+                    });
+                  },
+                  icon: const Icon(Icons.psychology_outlined, size: 16),
+                  label: const Text('ANALYZE SITUATION (LOCAL NLP)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.cyanAccent,
+                    side: const BorderSide(color: Colors.cyanAccent),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
+              if (_triageResult != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _triageResult!.priorityLabel,
+                            style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 11),
+                          ),
+                          Text(
+                            'Score: ${_triageResult!.score}/100',
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10),
+                          ),
+                        ],
+                      ),
+                      if (_triageResult!.reasons.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Factors: ${_triageResult!.reasons.join(', ')}',
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 10),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [

@@ -68,7 +68,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF1E293B),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: statusTag.color.withOpacity(0.4)),
+                border: Border.all(color: statusTag.color.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
@@ -78,15 +78,22 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('ENVIRONMENTAL DATA PROVENANCE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white.withOpacity(0.5))),
+                        Text('ENVIRONMENTAL DATA PROVENANCE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white.withValues(alpha: 0.5))),
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            const Text('Geofence: Active GPS Sector Target', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                            const Expanded(
+                              child: Text(
+                                'Geofence: Active GPS Sector Target',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(color: statusTag.color.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                              decoration: BoxDecoration(color: statusTag.color.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
                               child: Text(statusTag.label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: statusTag.color)),
                             ),
                           ],
@@ -114,91 +121,136 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent))
-                  : ListView.builder(
-                      itemCount: _events.length,
-                      itemBuilder: (context, idx) {
-                        final ev = _events[idx];
-                        final isCritical = ev.severity == 'CRITICAL';
-                        final isLocal = ev.id.startsWith('LOC');
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          CircularProgressIndicator(color: AppBrand.accentCyan),
+                          SizedBox(height: 12),
+                          Text(
+                            'Loading live disaster feeds (EONET, GDACS, USGS)...',
+                            style: TextStyle(color: Colors.white70, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _events.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.shield_outlined, size: 48, color: Colors.white38),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'No Active Official Disaster Warnings',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                                const SizedBox(height: 6),
+                                const Text(
+                                  'Verified global feeds report no active hazard advisories for this sector. For life emergencies, call 108 / 112.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontSize: 12, color: Colors.white60),
+                                ),
+                                const SizedBox(height: 16),
+                                OutlinedButton.icon(
+                                  onPressed: _fetchEvents,
+                                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                                  label: const Text('Refresh Feeds'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppBrand.accentCyan,
+                                    side: const BorderSide(color: AppBrand.accentCyan),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: _events.length,
+                          itemBuilder: (context, idx) {
+                            final ev = _events[idx];
+                            final isCritical = ev.severity == 'CRITICAL';
+                            final isLocal = ev.id.startsWith('LOC');
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: isLocal ? Colors.amber.withOpacity(0.5) : Colors.white.withOpacity(0.08)),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: (isCritical ? Colors.redAccent : Colors.amber).withOpacity(0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  isCritical ? Icons.warning_amber_rounded : Icons.thunderstorm_rounded,
-                                  color: isCritical ? Colors.redAccent : Colors.amber,
-                                  size: 20,
-                                ),
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E293B),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: isLocal ? Colors.amber.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.08)),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: (isCritical ? Colors.redAccent : Colors.amber).withValues(alpha: 0.15),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      isCritical ? Icons.warning_amber_rounded : Icons.thunderstorm_rounded,
+                                      color: isCritical ? Colors.redAccent : Colors.amber,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Expanded(
-                                          child: Text(
-                                            ev.title,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
-                                          ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                ev.title,
+                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                                              ),
+                                            ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: (isCritical ? Colors.redAccent : Colors.amber).withValues(alpha: 0.2),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                ev.severity,
+                                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isCritical ? Colors.redAccent : Colors.amber),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: (isCritical ? Colors.redAccent : Colors.amber).withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            ev.severity,
-                                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isCritical ? Colors.redAccent : Colors.amber),
-                                          ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Category: ${ev.category} • Source: ${ev.source}',
+                                          style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.6)),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.access_time_rounded, color: Colors.white.withValues(alpha: 0.4), size: 12),
+                                            const SizedBox(width: 4),
+                                            Text('Updated ${ev.ageLabel}', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.4))),
+                                            const SizedBox(width: 10),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                              decoration: BoxDecoration(color: emeraldColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(3)),
+                                              child: Text('● ${ev.freshnessTag}', style: const TextStyle(fontSize: 8, color: emeraldColor, fontWeight: FontWeight.bold)),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Category: ${ev.category} • Source: ${ev.source}',
-                                      style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.6)),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        Icon(Icons.access_time_rounded, color: Colors.white.withOpacity(0.4), size: 12),
-                                        const SizedBox(width: 4),
-                                        Text('Updated ${ev.ageLabel}', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.4))),
-                                        const SizedBox(width: 10),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                          decoration: BoxDecoration(color: emeraldColor.withOpacity(0.2), borderRadius: BorderRadius.circular(3)),
-                                          child: Text('● ${ev.freshnessTag}', style: const TextStyle(fontSize: 8, color: emeraldColor, fontWeight: FontWeight.bold)),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),
@@ -214,7 +266,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: (isLive ? emeraldColor : Colors.amber).withOpacity(0.4)),
+        border: Border.all(color: (isLive ? emeraldColor : Colors.amber).withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +284,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: (isLive ? emeraldColor : Colors.amber).withOpacity(0.2),
+                  color: (isLive ? emeraldColor : Colors.amber).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -255,7 +307,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           const SizedBox(height: 8),
           Text(
             'Condition: ${w.condition} • Observed: ${_formatAge(w.observedAt)}',
-            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10, fontStyle: FontStyle.italic),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 10, fontStyle: FontStyle.italic),
           ),
         ],
       ),
@@ -268,7 +320,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
         Icon(icon, color: color, size: 18),
         const SizedBox(height: 2),
         Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 9)),
+        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 9)),
       ],
     );
   }

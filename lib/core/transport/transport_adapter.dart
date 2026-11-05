@@ -124,7 +124,7 @@ class InternetTransport implements TransportAdapter {
       _status = TransportStatus.disconnected;
       return const TransmissionResult(
         success: false,
-        message: 'Server not configured: set AARAKSHAK_SERVER_URL at build time. Packet was not sent.',
+        message: 'Server not configured — run with --dart-define',
       );
     }
     try {
@@ -137,7 +137,7 @@ class InternetTransport implements TransportAdapter {
         body: '{"raw_hex": "$hex"}',
       ).timeout(const Duration(seconds: 60));
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 409) {
         _status = TransportStatus.connected;
         String? ackToken;
         try {
@@ -148,22 +148,36 @@ class InternetTransport implements TransportAdapter {
         } catch (_) {}
         return TransmissionResult(
           success: true,
-          message: 'Delivered directly to backend server (HTTP ${response.statusCode})',
+          message: response.statusCode == 409
+              ? 'Packet already ingested by backend server (HTTP 409)'
+              : 'Delivered directly to backend server (HTTP ${response.statusCode})',
           hops: 0,
           ackId: ackToken ?? 'ACK-REST-${response.statusCode}',
+        );
+      } else if (response.statusCode == 401) {
+        _status = TransportStatus.error;
+        return const TransmissionResult(
+          success: false,
+          message: 'Server rejected the packet (check token)',
         );
       } else {
         _status = TransportStatus.error;
         return TransmissionResult(
           success: false,
-          message: 'Server error HTTP ${response.statusCode}: ${response.body}',
+          message: 'Server error HTTP ${response.statusCode} — will retry automatically',
         );
       }
+    } on TimeoutException {
+      _status = TransportStatus.error;
+      return const TransmissionResult(
+        success: false,
+        message: 'Waiting for server — first request can take up to 60s',
+      );
     } catch (e) {
       _status = TransportStatus.error;
-      return TransmissionResult(
+      return const TransmissionResult(
         success: false,
-        message: 'Internet connection unavailable or backend offline: $e',
+        message: 'No internet — will retry when back online',
       );
     }
   }

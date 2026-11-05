@@ -66,6 +66,29 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
       ),
       body: Column(
         children: [
+          // Simulation Banner
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Colors.amber.shade900.withValues(alpha: 0.35),
+            child: Row(
+              children: [
+                const Icon(Icons.science_outlined, color: Colors.amber, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'SIMULATION ONLY — NOT REAL MESH HARDWARE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber.shade200,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           // Top Simulator Metrics Bar
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -226,7 +249,19 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
                             color: Colors.black,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: ListView.builder(
+                          child: _engine.hopLog.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'No hops logged yet.\nTap "INJECT SOS" or "CHAOS TEST" above to simulate packet propagation.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 10,
+                                      color: Colors.white38,
+                                    ),
+                                  ),
+                                )
+                              : ListView.builder(
                             itemCount: _engine.hopLog.length,
                             itemBuilder: (context, idx) {
                               final log = _engine

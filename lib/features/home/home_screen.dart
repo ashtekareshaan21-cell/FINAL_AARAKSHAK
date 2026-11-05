@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/atmosphere_theme.dart';
 import '../../core/constants/app_constants.dart';
+import '../../shared/constants/app_brand.dart';
 import '../context_engine/context_providers.dart';
 import '../context_engine/risk_state.dart';
 import '../simulation/simulation_controller.dart';
@@ -17,11 +18,41 @@ import 'widgets/emergency_action_panel.dart';
 import 'widgets/location_selector_modal.dart';
 import 'widgets/weather_summary_card.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _isRefreshingAssistance = false;
+
+  Future<void> _handleRefreshAssistance(LocationData location) async {
+    if (_isRefreshingAssistance) return;
+    setState(() => _isRefreshingAssistance = true);
+    try {
+      await ref.read(assistanceRepositoryProvider).refreshFromOverpass(
+            userLat: location.latitude,
+            userLng: location.longitude,
+          );
+      ref.invalidate(sortedAssistanceProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Overpass fetch failed: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRefreshingAssistance = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final riskStateAsync = ref.watch(riskStateProvider);
     final location = ref.watch(locationStateProvider);
     final weatherAsync = ref.watch(weatherStateProvider);
@@ -29,6 +60,10 @@ class HomeScreen extends ConsumerWidget {
     final activeHazardsAsync = ref.watch(activeHazardsProvider);
     final activeSos = ref.watch(sosControllerProvider);
     final simState = ref.watch(simulationProvider);
+    final syncStatus = ref.watch(syncStatusMessageProvider).maybeWhen(
+      data: (msg) => msg,
+      orElse: () => ref.read(syncServiceProvider).syncStatusMessage,
+    );
 
     final RiskState riskState = riskStateAsync.maybeWhen(
       data: (data) => data,
@@ -91,6 +126,7 @@ class HomeScreen extends ConsumerWidget {
                       // 4. Hero Emergency Action Panel ([ SEND SOS ] Button)
                       EmergencyActionPanel(
                         activeSos: activeSos,
+                        syncStatusMessage: syncStatus,
                         onTriggerSos: () {
                           // Never send a Home SOS from an unconfirmed /
                           // fallback location. An explicit manual pick
@@ -121,20 +157,84 @@ class HomeScreen extends ConsumerWidget {
                       const SizedBox(height: 20),
 
                       // 5. Dynamic Nearby Emergency Assistance Points
-                      const Text(
-                        'NEARBY ASSISTANCE (DYNAMICALLY SORTED)',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white54,
-                          letterSpacing: 1.0,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'NEARBY ASSISTANCE (OVERPASS)',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white54,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: _isRefreshingAssistance
+                                ? null
+                                : () => _handleRefreshAssistance(location),
+                            icon: _isRefreshingAssistance
+                                ? const SizedBox(
+                                    width: 12,
+                                    height: 12,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1.5,
+                                      color: AppBrand.accentCyan,
+                                    ),
+                                  )
+                                : const Icon(Icons.refresh_rounded, size: 14, color: AppBrand.accentCyan),
+                            label: Text(
+                              _isRefreshingAssistance ? 'Refreshing...' : 'Refresh',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppBrand.accentCyan,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       sortedAssistanceAsync.when(
-                        data: (points) => AssistanceList(points: points),
-                        loading: () => const Center(child: CircularProgressIndicator.adaptive()),
-                        error: (_, _) => const Text('Unable to load assistance points.', style: TextStyle(color: Colors.redAccent)),
+                        data: (points) => AssistanceList(
+                          points: points,
+                          isRefreshing: _isRefreshingAssistance,
+                          onRefresh: () => _handleRefreshAssistance(location),
+                        ),
+                        loading: () => Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppBrand.accentCyan),
+                              ),
+                              SizedBox(width: 10),
+                              Text('Loading verified facilities...', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                            ],
+                          ),
+                        ),
+                        error: (_, _) => Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text('Unable to load assistance points.', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+                        ),
                       ),
 
                       const SizedBox(height: 20),

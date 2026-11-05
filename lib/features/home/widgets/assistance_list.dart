@@ -1,24 +1,72 @@
 import 'package:flutter/material.dart';
 import '../../assistance/assistance_model.dart';
 import '../../../core/utils/distance_utils.dart';
+import '../../../shared/constants/app_brand.dart';
 
 class AssistanceList extends StatelessWidget {
   final List<AssistancePoint> points;
+  final VoidCallback? onRefresh;
+  final bool isRefreshing;
 
-  const AssistanceList({super.key, required this.points});
+  const AssistanceList({
+    super.key,
+    required this.points,
+    this.onRefresh,
+    this.isRefreshing = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
       return Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFF1E293B),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
-        child: const Text(
-          'No verified assistance points loaded yet. For emergencies, call 108 / 112.',
-          style: TextStyle(fontSize: 12, color: Colors.white60),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: const [
+                Icon(Icons.local_hospital_outlined, color: Colors.white54, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'No verified assistance points loaded yet.',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'For emergencies, call 108 / 112. Tap below to query OpenStreetMap Overpass for hospitals and shelters near your location.',
+              style: TextStyle(fontSize: 12, color: Colors.white60),
+            ),
+            if (onRefresh != null) ...[
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: isRefreshing ? null : onRefresh,
+                icon: isRefreshing
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                      )
+                    : const Icon(Icons.refresh_rounded, size: 16),
+                label: Text(isRefreshing ? 'Fetching Overpass...' : 'Fetch Nearby Facilities (Overpass)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppBrand.accentCyan,
+                  foregroundColor: Colors.black,
+                  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                ),
+              ),
+            ],
+          ],
         ),
       );
     }
@@ -34,14 +82,14 @@ class AssistanceList extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 20),
@@ -66,7 +114,7 @@ class AssistanceList extends StatelessWidget {
                       '${point.capacity > 0 ? 'Cap: ${point.capacity}' : 'Capacity: Unknown'} • ${point.contact.isNotEmpty ? point.contact : '108 / 112'}',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -78,9 +126,9 @@ class AssistanceList extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: color.withOpacity(0.4)),
+                  border: Border.all(color: color.withValues(alpha: 0.4)),
                 ),
                 child: Text(
                   DistanceUtils.formatDistance(point.calculatedDistanceKm),

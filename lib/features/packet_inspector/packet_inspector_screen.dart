@@ -288,6 +288,20 @@ class _PacketInspectorScreenState extends State<PacketInspectorScreen> {
                   ),
                 ],
               ),
+            ] else ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppBrand.cardDark,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppBrand.colorCritical.withValues(alpha: 0.3)),
+                ),
+                child: const Text(
+                  'Packet cannot be decoded due to corrupted bytes / invalid CRC checksum. Tap "GENERATE CANONICAL FRAME" to restore.',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ),
             ],
           ],
         ),

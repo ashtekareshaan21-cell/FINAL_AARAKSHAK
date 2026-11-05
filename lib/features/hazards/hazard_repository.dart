@@ -10,7 +10,7 @@ class HazardRepository {
   final HazardDataSource _apiSource;
   final DatabaseHelper _dbHelper;
 
-  List<Hazard> _meshHazards = [];
+  final List<Hazard> _meshHazards = [];
   List<Hazard> _simulatedHazards = [];
 
   HazardRepository({
