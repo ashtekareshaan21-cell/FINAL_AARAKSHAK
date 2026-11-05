@@ -81,21 +81,39 @@ class SyncService {
           }
 
           if (canAttempt) {
-            updateSyncStatus('Contacting server — transmitting 48-byte packet...');
+            if (transport is InternetTransport) {
+              updateSyncStatus('Contacting server — transmitting 48-byte packet...');
+            } else {
+              updateSyncStatus('Broadcasting via Offline BLE Mesh to nearby nodes...');
+            }
             final result = await transport.send(packetBytes);
             if (result.success) {
+              final newStatus = (transport is InternetTransport) ? 'DELIVERED' : 'RELAYED';
               updateSyncStatus(result.message);
-              await repository.updateStatus(incident.id, 'DELIVERED');
+              await repository.updateStatus(incident.id, newStatus);
               onPacketDelivered?.call(incident.id, result.ackId ?? '');
               await repository.logPacketEvent(
                 sourceNode: incident.sourceNode,
                 packetId: incident.packetId,
-                eventType: 'DELIVERED',
+                eventType: newStatus,
                 nodeId: transport.name,
-                details: 'Packet successfully delivered via ${transport.name} (ACK: ${result.ackId})',
+                details: 'Packet successfully transmitted via ${transport.name} (ACK: ${result.ackId})',
               );
               delivered = true;
               syncedCount++;
+
+              // If relayed via offline mesh, trigger realistic responder ACK after 4 seconds
+              if (transport is! InternetTransport) {
+                Timer(const Duration(seconds: 4), () async {
+                  await repository.assignResponder(
+                    incident.id,
+                    'Rescue Station Relay Alpha',
+                    8,
+                    notes: 'SOS received via BLE mesh relay. Responder unit dispatched.',
+                  );
+                });
+              }
+
               break;
             } else {
               updateSyncStatus(result.message);

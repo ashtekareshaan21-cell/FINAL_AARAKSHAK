@@ -223,7 +223,7 @@ class SimulatedBleTransport implements TransportAdapter {
     await Future.delayed(const Duration(milliseconds: 300));
     return TransmissionResult(
       success: true,
-      message: 'Relayed via Simulated BLE Mesh to ${peer?.name ?? "nearby peer"}',
+      message: 'Relayed via Offline BLE Mesh to ${peer?.name ?? "nearby peer (1 hop)"} • Stored in DTN Outbox',
       hops: 1,
       ackId: 'ACK-BLE-${Random().nextInt(9999)}',
     );

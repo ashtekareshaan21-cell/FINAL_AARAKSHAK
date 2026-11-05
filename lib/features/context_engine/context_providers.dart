@@ -51,12 +51,17 @@ final internetTransportProvider = Provider<InternetTransport>((ref) {
   return InternetTransport();
 });
 
+final bleTransportProvider = Provider<SimulatedBleTransport>((ref) {
+  return SimulatedBleTransport();
+});
+
 final syncServiceProvider = Provider<SyncService>((ref) {
   final repository = ref.watch(incidentRepositoryProvider);
-  final transport = ref.watch(internetTransportProvider);
+  final internet = ref.watch(internetTransportProvider);
+  final ble = ref.watch(bleTransportProvider);
   return SyncService(
     repository: repository,
-    transports: [transport],
+    transports: [internet, ble],
   );
 });
 

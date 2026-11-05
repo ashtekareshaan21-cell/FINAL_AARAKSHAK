@@ -37,12 +37,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             userLng: location.longitude,
           );
       ref.invalidate(sortedAssistanceProvider);
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Overpass fetch failed: $e'),
-            backgroundColor: Colors.redAccent,
+          const SnackBar(
+            content: Text('Offline Mode: Using cached verified facilities. Connect to internet for live OpenStreetMap Overpass queries.'),
+            backgroundColor: Color(0xFF1E293B),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }

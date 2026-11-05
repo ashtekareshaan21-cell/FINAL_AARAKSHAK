@@ -202,7 +202,11 @@ class LocationService {
         }
       }
     } catch (_) {
-      // Offline fallback: keep existing address or fallback
+      // Offline fallback: keep existing address or show Offline GPS Active
+      if (_currentLocation.address.startsWith('Fetching')) {
+        _currentLocation = _currentLocation.copyWith(address: 'Offline GPS Active');
+        _locationController.add(_currentLocation);
+      }
     }
   }
 
