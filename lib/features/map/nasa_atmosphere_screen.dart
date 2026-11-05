@@ -84,40 +84,55 @@ class _NasaAtmosphereScreenState extends ConsumerState<NasaAtmosphereScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'NASA ATMOSPHERE OBSERVATORY',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                    color: Colors.white,
+                const Expanded(
+                  child: Text(
+                    'NASA ATMOSPHERE OBSERVATORY',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
             ),
-            Text(
+            const Text(
               'GIBS Satellite Tiles • Dynamic Wind Particles • EONET Events',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 9,
-                color: Colors.white.withValues(alpha: 0.6),
+                color: Colors.white60,
               ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.tune_rounded, color: Colors.cyanAccent),
+            icon: const Icon(Icons.tune_rounded, color: Colors.cyanAccent, size: 20),
+            padding: const EdgeInsets.all(6),
+            constraints: const BoxConstraints(),
+            visualDensity: VisualDensity.compact,
             tooltip: 'Atmospheric Layers & Controls',
             onPressed: () => _showLayerControlsModal(context),
           ),
+          const SizedBox(width: 6),
           IconButton(
             icon: const Icon(
               Icons.my_location_rounded,
               color: Colors.cyanAccent,
+              size: 20,
             ),
+            padding: const EdgeInsets.all(6),
+            constraints: const BoxConstraints(),
+            visualDensity: VisualDensity.compact,
             tooltip: 'Change Sector Location',
             onPressed: () => LocationSelectorModal.show(context),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -125,48 +140,43 @@ class _NasaAtmosphereScreenState extends ConsumerState<NasaAtmosphereScreen> {
           children: [
             // Top Telemetry Header Bar
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               color: const Color(0xFF0F172A).withValues(alpha: 0.9),
-              child: Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF10B981),
-                      shape: BoxShape.circle,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'NASA GIBS LIVE LINK',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF10B981),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'NASA GIBS LIVE LINK',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF10B981),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildSectorChip(
-                          'GPS Location',
-                          location.latitude,
-                          location.longitude,
-                        ),
-                        const SizedBox(width: 6),
-                        _buildSectorChip('Primary Sector', 18.5204, 73.8567),
-                        const SizedBox(width: 6),
-                        _buildSectorChip('Mumbai Bay', 18.9667, 72.8333),
-                        const SizedBox(width: 6),
-                        _buildSectorChip('Bay of Bengal', 15.0000, 88.0000),
-                      ],
+                    const SizedBox(width: 12),
+                    _buildSectorChip(
+                      'GPS Location',
+                      location.latitude,
+                      location.longitude,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    _buildSectorChip('Primary Sector', 18.5204, 73.8567),
+                    const SizedBox(width: 6),
+                    _buildSectorChip('Mumbai Bay', 18.9667, 72.8333),
+                    const SizedBox(width: 6),
+                    _buildSectorChip('Bay of Bengal', 15.0000, 88.0000),
+                  ],
+                ),
               ),
             ),
 

@@ -7,7 +7,8 @@ import '../../core/networking/mesh_simulator_engine.dart';
 import '../../core/packet/packet_engine.dart';
 
 class MeshSimScreen extends StatefulWidget {
-  const MeshSimScreen({super.key});
+  final bool showAppBar;
+  const MeshSimScreen({super.key, this.showAppBar = true});
 
   @override
   State<MeshSimScreen> createState() => _MeshSimScreenState();
@@ -54,42 +55,32 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
   Widget build(BuildContext context) {
     final metrics = _engine.metrics;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('50-NODE DELAY-TOLERANT MESH SIMULATOR'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => setState(() => _engine.resetTopology()),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Simulation Banner
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: Colors.amber.shade900.withValues(alpha: 0.35),
-            child: Row(
-              children: [
-                const Icon(Icons.science_outlined, color: Colors.amber, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'SIMULATION ONLY — NOT REAL MESH HARDWARE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.amber.shade200,
-                      letterSpacing: 0.5,
-                    ),
+    final bodyContent = Column(
+      children: [
+        // Simulation Banner
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: Colors.amber.shade900.withValues(alpha: 0.35),
+          child: Row(
+            children: [
+              const Icon(Icons.science_outlined, color: Colors.amber, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'SIMULATION ONLY — NOT REAL MESH HARDWARE',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber.shade200,
+                    letterSpacing: 0.5,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          // Top Simulator Metrics Bar
+        ),
+        // Top Simulator Metrics Bar
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             color: AppBrand.cardDark,
@@ -226,6 +217,19 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
                               backgroundColor: Colors.purpleAccent,
                             ),
                           ),
+                          ElevatedButton.icon(
+                            onPressed: () =>
+                                setState(() => _engine.resetTopology()),
+                            icon: const Icon(Icons.refresh, size: 14),
+                            label: const Text(
+                              'RESET TOPOLOGY',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF334155),
+                              foregroundColor: Colors.white70,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -308,7 +312,23 @@ class _MeshSimScreenState extends State<MeshSimScreen> {
             ),
           ),
         ],
+      );
+
+    if (!widget.showAppBar) {
+      return bodyContent;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('50-NODE DELAY-TOLERANT MESH SIMULATOR'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => setState(() => _engine.resetTopology()),
+          ),
+        ],
       ),
+      body: bodyContent,
     );
   }
 

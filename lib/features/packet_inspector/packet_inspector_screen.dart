@@ -4,7 +4,8 @@ import '../../shared/constants/app_brand.dart';
 import '../../core/packet/packet_engine.dart';
 
 class PacketInspectorScreen extends StatefulWidget {
-  const PacketInspectorScreen({super.key});
+  final bool showAppBar;
+  const PacketInspectorScreen({super.key, this.showAppBar = true});
 
   @override
   State<PacketInspectorScreen> createState() => _PacketInspectorScreenState();
@@ -71,15 +72,11 @@ class _PacketInspectorScreenState extends State<PacketInspectorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('TECHNICAL PACKET INSPECTOR (SOS_FRAME_V1)'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    final bodyContent = SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             // Status Header Banner
             Container(
               padding: const EdgeInsets.all(16),
@@ -305,7 +302,17 @@ class _PacketInspectorScreenState extends State<PacketInspectorScreen> {
             ],
           ],
         ),
+      );
+
+    if (!widget.showAppBar) {
+      return bodyContent;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('TECHNICAL PACKET INSPECTOR (SOS_FRAME_V1)'),
       ),
+      body: bodyContent,
     );
   }
 

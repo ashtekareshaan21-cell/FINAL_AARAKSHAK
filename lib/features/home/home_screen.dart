@@ -340,64 +340,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(width: 6),
 
               // Connectivity Status Badge
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: netColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: netColor.withValues(alpha: 0.5)),
-                  ),
-                  child: Text(
-                    netStatusLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: netColor,
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: netColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: netColor.withValues(alpha: 0.5)),
+                ),
+                child: Text(
+                  netStatusLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: netColor,
                   ),
                 ),
               ),
 
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
 
               // Risk Status Badge
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: palette.statusBadgeColor.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: palette.accentColor, width: 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: palette.accentColor,
-                          shape: BoxShape.circle,
-                        ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: palette.statusBadgeColor.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: palette.accentColor, width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: palette.accentColor,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          palette.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: palette.textColor,
-                          ),
-                        ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      palette.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: palette.textColor,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],

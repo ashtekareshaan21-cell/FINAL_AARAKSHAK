@@ -28,24 +28,24 @@ class SimulationControlPanel extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
-                  Icon(Icons.tune_rounded, color: Colors.cyanAccent, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'CONTROLLED DEMO / SIMULATION MODE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.cyanAccent,
-                      letterSpacing: 1.0,
-                    ),
+              const Icon(Icons.tune_rounded, color: Colors.cyanAccent, size: 20),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'CONTROLLED DEMO / SIMULATION MODE',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.cyanAccent,
+                    letterSpacing: 0.8,
                   ),
-                ],
+                ),
               ),
-              if (simState.isSimulationActive)
+              if (simState.isSimulationActive) ...[
+                const SizedBox(width: 6),
                 TextButton(
                   onPressed: () => simNotifier.resetSimulation(),
                   style: TextButton.styleFrom(
@@ -61,6 +61,7 @@ class SimulationControlPanel extends ConsumerWidget {
                     style: TextStyle(fontSize: 10, color: Colors.redAccent),
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 12),

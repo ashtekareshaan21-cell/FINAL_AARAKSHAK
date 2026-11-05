@@ -397,30 +397,43 @@ class _VictimScreenState extends State<VictimScreen> {
               child: const Icon(Icons.shield_outlined, color: Colors.redAccent, size: 20),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(AppBrand.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text(AppBrand.tagline, style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.6))),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppBrand.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  Text(
+                    AppBrand.tagline,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.6)),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
           Container(
             margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: (_isOnline ? emeraldColor : Colors.amber).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: (_isOnline ? emeraldColor : Colors.amber).withValues(alpha: 0.4)),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(_isOnline ? Icons.wifi_rounded : Icons.wifi_off_rounded, color: _isOnline ? emeraldColor : Colors.amber, size: 14),
                 const SizedBox(width: 4),
                 Text(
-                  _isOnline ? 'ONLINE • OFFLINE READY' : 'OFFLINE • MESH ACTIVE',
+                  _isOnline ? 'ONLINE' : 'MESH ONLY',
                   style: TextStyle(fontSize: 10, color: _isOnline ? emeraldColor : Colors.amber, fontWeight: FontWeight.bold),
                 ),
               ],

@@ -30,57 +30,48 @@ class RiskStatusCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: palette.accentColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'CURRENT SAFETY STATE',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.0,
-                          color: palette.accentColor,
-                        ),
-                      ),
-                    ),
-                  ],
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: palette.accentColor,
+                  shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'CURRENT SAFETY STATE',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: palette.accentColor,
                   ),
-                  decoration: BoxDecoration(
-                    color: palette.statusBadgeColor.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: palette.accentColor, width: 1),
-                  ),
-                  child: Text(
-                    palette.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      color: palette.textColor,
-                    ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.statusBadgeColor.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: palette.accentColor, width: 1),
+                ),
+                child: Text(
+                  palette.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: palette.textColor,
                   ),
                 ),
               ),

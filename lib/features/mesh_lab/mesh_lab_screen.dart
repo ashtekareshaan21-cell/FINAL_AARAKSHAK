@@ -52,11 +52,12 @@ class _MeshLabScreenState extends State<MeshLabScreen> with SingleTickerProvider
           indicatorColor: Colors.purpleAccent,
           labelColor: Colors.purpleAccent,
           unselectedLabelColor: Colors.white54,
-          labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+          labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+          labelStyle: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
           tabs: const [
             Tab(icon: Icon(Icons.hub_rounded, size: 18), text: '50-NODE MESH'),
             Tab(icon: Icon(Icons.memory_rounded, size: 18), text: 'HEX INSPECTOR'),
-            Tab(icon: Icon(Icons.tune_rounded, size: 18), text: 'CHAOS CONTROL'),
+            Tab(icon: Icon(Icons.tune_rounded, size: 18), text: 'CHAOS LAB'),
           ],
         ),
       ),
@@ -64,10 +65,10 @@ class _MeshLabScreenState extends State<MeshLabScreen> with SingleTickerProvider
         controller: _tabController,
         children: [
           // 1. Mesh Topology & Simulator
-          const MeshSimScreen(),
+          const MeshSimScreen(showAppBar: false),
 
           // 2. 48-Byte Hex Frame Inspector
-          const PacketInspectorScreen(),
+          const PacketInspectorScreen(showAppBar: false),
 
           // 3. Chaos Controls Panel
           SingleChildScrollView(

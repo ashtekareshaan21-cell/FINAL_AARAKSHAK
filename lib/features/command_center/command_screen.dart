@@ -135,6 +135,9 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
           // Audio Alert Alarm Test Button
           IconButton(
             tooltip: 'Test Alarm Beep',
+            padding: const EdgeInsets.all(6),
+            constraints: const BoxConstraints(),
+            visualDensity: VisualDensity.compact,
             onPressed: () {
               AudioAlertService.playEmergencyBeep();
               ScaffoldMessenger.of(context).showSnackBar(
@@ -147,8 +150,12 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
             },
             icon: const Icon(Icons.volume_up_rounded, color: Colors.redAccent, size: 20),
           ),
+          const SizedBox(width: 4),
           IconButton(
-            icon: const Icon(Icons.public_rounded, color: Colors.cyanAccent),
+            icon: const Icon(Icons.public_rounded, color: Colors.cyanAccent, size: 20),
+            padding: const EdgeInsets.all(6),
+            constraints: const BoxConstraints(),
+            visualDensity: VisualDensity.compact,
             tooltip: 'Launch NASA Satellite Atmosphere Map',
             onPressed: () {
               Navigator.of(context).push(
@@ -156,10 +163,15 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
               );
             },
           ),
+          const SizedBox(width: 4),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white70, size: 20),
+            padding: const EdgeInsets.all(6),
+            constraints: const BoxConstraints(),
+            visualDensity: VisualDensity.compact,
             onPressed: _loadIncidents,
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
@@ -509,18 +521,18 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.crisis_alert_rounded, color: Colors.white, size: 22),
-                        const SizedBox(width: 8),
-                        Text(
-                          'INCIDENT ID: ${incident.id}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5),
-                        ),
-                      ],
+                    const Icon(Icons.crisis_alert_rounded, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'INCIDENT ID: ${incident.id}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5),
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
@@ -530,7 +542,9 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  '${incident.category.toUpperCase()} EMERGENCY',
+                  incident.category.toUpperCase().contains('EMERGENCY')
+                      ? incident.category.toUpperCase()
+                      : '${incident.category.toUpperCase()} EMERGENCY',
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
                 ),
                 const SizedBox(height: 4),
@@ -573,19 +587,22 @@ class _CommandScreenState extends State<CommandScreen> with SingleTickerProvider
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
-                  Icon(Icons.verified_user_rounded, color: emeraldColor, size: 20),
-                  SizedBox(width: 8),
-                  Text('DATA TRUST & CONFIDENCE ENGINE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                ],
+              const Icon(Icons.verified_user_rounded, color: emeraldColor, size: 20),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'DATA TRUST & CONFIDENCE ENGINE',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(color: emeraldColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-                child: Text('${trust.score}% TRUST SCORE', style: const TextStyle(color: emeraldColor, fontWeight: FontWeight.w900, fontSize: 12)),
+                child: Text('${trust.score}% TRUST SCORE', style: const TextStyle(color: emeraldColor, fontWeight: FontWeight.w900, fontSize: 11)),
               ),
             ],
           ),
