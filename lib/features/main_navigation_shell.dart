@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'home/home_screen.dart';
 import 'disaster_radar/disaster_radar_screen.dart';
+import 'disaster_alerts/alerts_screen.dart';
 import 'command_center/command_screen.dart';
 import 'mesh_lab/mesh_lab_screen.dart';
 
@@ -18,6 +19,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   final List<Widget> _screens = const [
     HomeScreen(),
     DisasterRadarScreen(),
+    AlertsScreen(),
     CommandScreen(),
     MeshLabScreen(),
   ];
@@ -42,29 +44,34 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           backgroundColor: const Color(0xFF1E293B),
           selectedItemColor: _getSelectedColor(_currentIndex),
           unselectedItemColor: Colors.white38,
-          selectedFontSize: 11,
-          unselectedFontSize: 10,
+          selectedFontSize: 10,
+          unselectedFontSize: 9,
           type: BottomNavigationBarType.fixed,
           elevation: 8,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.shield_rounded),
-              activeIcon: Icon(Icons.shield_rounded, size: 24),
+              icon: Icon(Icons.shield_rounded, size: 20),
+              activeIcon: Icon(Icons.shield_rounded, size: 22),
               label: 'Safety Hub',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.radar_rounded),
-              activeIcon: Icon(Icons.radar_rounded, size: 24),
+              icon: Icon(Icons.radar_rounded, size: 20),
+              activeIcon: Icon(Icons.radar_rounded, size: 22),
               label: 'Radar',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.admin_panel_settings_rounded),
-              activeIcon: Icon(Icons.admin_panel_settings_rounded, size: 24),
+              icon: Icon(Icons.newspaper_rounded, size: 20),
+              activeIcon: Icon(Icons.newspaper_rounded, size: 22),
+              label: 'Alerts & News',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.admin_panel_settings_rounded, size: 20),
+              activeIcon: Icon(Icons.admin_panel_settings_rounded, size: 22),
               label: 'EOC Command',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bolt_rounded),
-              activeIcon: Icon(Icons.bolt_rounded, size: 24),
+              icon: Icon(Icons.bolt_rounded, size: 20),
+              activeIcon: Icon(Icons.bolt_rounded, size: 22),
               label: 'Mesh Lab',
             ),
           ],
@@ -80,8 +87,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       case 1:
         return Colors.cyanAccent;
       case 2:
-        return Colors.blueAccent;
+        return Colors.amberAccent;
       case 3:
+        return Colors.blueAccent;
+      case 4:
         return Colors.purpleAccent;
       default:
         return const Color(0xFF10B981);
