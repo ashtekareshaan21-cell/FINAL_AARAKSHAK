@@ -26,7 +26,7 @@ class AppConfig {
           serverBaseUrl.startsWith('http://'));
 
   // Overpass and the public disaster feeds need no key.
-  static const String overpassUrl = 'https://overpass-api.de/api/interpreter';
+  static const String overpassUrl = 'https://lz4.overpass-api.de/api/interpreter';
   static const String usgsFeedUrl =
       'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson';
   static const String gdacsFeedUrl =

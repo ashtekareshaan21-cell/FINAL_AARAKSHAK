@@ -40,6 +40,7 @@ abstract class DisasterDataService {
 
 class NasaEonetDisasterService implements DisasterDataService {
   List<DisasterEvent> _cachedEvents = [];
+  bool lastFetchSucceeded = false;
 
   @override
   SubsystemCapability get statusTag =>
@@ -76,7 +77,7 @@ class NasaEonetDisasterService implements DisasterDataService {
               latitude: lat,
               longitude: lon,
               timestamp: DateTime.tryParse(dateStr) ?? DateTime.now(),
-              source: 'NASA EONET APIv3',
+              source: 'EONET',
               severity: categoryName.contains('Flood') || categoryName.contains('Storm') ? 'CRITICAL' : 'ELEVATED',
               freshnessTag: 'LIVE',
             ));
@@ -84,10 +85,13 @@ class NasaEonetDisasterService implements DisasterDataService {
         }
         if (results.isNotEmpty) {
           _cachedEvents = results;
+          lastFetchSucceeded = true;
           return results;
         }
       }
+      lastFetchSucceeded = false;
     } catch (_) {
+      lastFetchSucceeded = false;
       // Offline fallback
     }
 

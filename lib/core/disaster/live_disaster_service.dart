@@ -47,7 +47,7 @@ class UsgsEarthquakeService implements DisasterDataService {
           timestamp: timeMs != null
               ? DateTime.fromMillisecondsSinceEpoch(timeMs.toInt())
               : DateTime.now(),
-          source: 'USGS Earthquake',
+          source: 'USGS',
           severity: (mag != null && mag >= 6.0) ? 'CRITICAL' : 'ELEVATED',
           freshnessTag: 'LIVE',
         ));

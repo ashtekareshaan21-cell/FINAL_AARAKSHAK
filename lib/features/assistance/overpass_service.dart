@@ -40,7 +40,11 @@ class OverpassService {
 out center 50;
 ''';
     final response = await _client
-        .post(Uri.parse(AppConfig.overpassUrl), body: {'data': query})
+        .post(
+          Uri.parse(AppConfig.overpassUrl),
+          headers: {'User-Agent': 'AarakshakEmergencyPlatform/1.0 (contact@aarakshak.internal)'},
+          body: {'data': query},
+        )
         .timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) return [];
     final data = json.decode(response.body);
