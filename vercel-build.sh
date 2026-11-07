@@ -3,6 +3,9 @@ set -e
 
 echo "=== Aarakshak Vercel Build Starting ==="
 
+# Prevent git dubious ownership errors in containerized CI
+git config --global --add safe.directory "*" || true
+
 # 1. Install Flutter if not in PATH
 if command -v flutter >/dev/null 2>&1; then
   echo "Flutter is already installed in system PATH."

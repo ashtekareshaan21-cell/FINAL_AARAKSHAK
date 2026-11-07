@@ -41,6 +41,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def root_status():
+    return {
+        "status": "ONLINE",
+        "service": "Aarakshak Emergency Platform API",
+        "version": "1.0.0-PROTOTYPE",
+        "docs": "/docs",
+        "health": "OK"
+    }
+
 # SQLite Database setup
 DB_FILE = "server_incidents.db"
 
