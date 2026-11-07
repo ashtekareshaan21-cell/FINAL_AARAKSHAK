@@ -1,0 +1,14 @@
+.git
+.github
+.dart_tool
+android/
+ios/
+macos/
+linux/
+windows/
+test/
+server/
+build/app/
+_flutter/
+*.apk
+*.sha1
